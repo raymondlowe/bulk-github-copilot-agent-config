@@ -1,6 +1,6 @@
 # Bulk GitHub Copilot Agent Configurator
 
-A simple automation tool that combines GitHub CLI (`gh`) with browser automation to manage GitHub Copilot agent MCP configurations across your personal repositories.
+A TypeScript-based automation tool that combines GitHub CLI (`gh`) with browser automation to manage GitHub Copilot agent MCP configurations across your personal repositories.
 
 ## 🎯 Purpose
 
@@ -17,24 +17,35 @@ Managing GitHub Copilot agent MCP (Model Context Protocol) server settings acros
 - **Smart MCP Config Handling**: Options to merge, skip existing, or overwrite MCP configurations
 - **Configuration as Code**: Define settings in simple YAML configuration files
 - **Safe Operations**: Dry-run mode and comprehensive logging of all changes
+- **TypeScript Implementation**: Full type safety and modern JavaScript features
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - **GitHub CLI** (`gh`) installed and authenticated with your personal account
-- **Node.js** 18+ for browser automation components
+- **Node.js** 18+ for the TypeScript/JavaScript runtime
 - **Repository admin access** for target repositories (your own repos or repos you collaborate on)
+- **Chromium browser** for browser automation (automatically installed via Playwright)
+
+**Note**: In some restricted environments (like CI/CD systems), browser automation may not work. In these cases, you can still use the tool for:
+- Configuration validation (`validate` command)
+- Repository discovery (`list-repos` command) 
+- GitHub authentication checking (`check-auth` command)
+- Dry-run previews for configuration planning
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/bulk-github-copilot-agent-config
+git clone https://github.com/raymondlowe/bulk-github-copilot-agent-config
 cd bulk-github-copilot-agent-config
 
 # Install dependencies
 npm install
+
+# Build the TypeScript code
+npm run build
 
 # Configure authentication
 gh auth login
@@ -68,6 +79,12 @@ filters:
   exclude:
     - "myusername/archived-project"
     - "myusername/template-repo"
+
+# Processing options
+options:
+  skip_existing: true  # Skip repos with existing MCP config
+  concurrency: 1       # Process one repo at a time for safety
+  verbose: true        # Enable detailed logging
 ```
 
 2. **Create an MCP configuration file** (`mcp-config.yaml`):
@@ -80,18 +97,20 @@ github:
   enabled: true
   config:
     token_source: "env:GITHUB_TOKEN"
+    repositories: ["*"]  # Allow access to all repositories
     
 playwright:
   enabled: true
   config:
     headless: true
+    timeout: 30000
 
-# You can add any MCP servers you want to configure
-custom_server:
+# File system access for local development
+filesystem:
   enabled: true
   config:
-    endpoint: "https://api.example.com"
-    auth_token: "env:CUSTOM_API_TOKEN"
+    root_path: "/workspace"
+    readonly: false
 ```
 
 3. **Optional: Configure repository secrets/variables** (`secrets.yaml`):
@@ -111,17 +130,44 @@ variables:
 4. **Run the configurator**:
 
 ```bash
+# Validate configuration files first
+npm run configure -- validate --repos repos.yaml --mcp-config mcp-config.yaml --secrets secrets.yaml
+
+# Check GitHub authentication
+npm run configure -- check-auth
+
+# List repositories that would be configured
+npm run configure -- list-repos --repos repos.yaml
+
 # Dry run to preview changes
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --dry-run
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml --dry-run
 
 # Apply MCP configuration only
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --apply
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml
 
 # Apply MCP config and secrets/variables
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --secrets secrets.yaml --apply
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml --secrets secrets.yaml
 ```
 
 ## 📋 Configuration Options
+
+### Available Commands
+
+The tool provides several commands for different operations:
+
+```bash
+# Main configuration command
+npm run configure -- configure [options]
+
+# Validate configuration files without applying changes
+npm run configure -- validate --repos <file> --mcp-config <file> [--secrets <file>]
+
+# Check GitHub CLI authentication status
+npm run configure -- check-auth
+
+# List repositories that would be configured
+npm run configure -- list-repos --repos <file>
+```
 
 ### MCP Configuration Handling
 
@@ -129,17 +175,34 @@ Control how existing MCP configurations are handled:
 
 ```bash
 # Don't overwrite existing MCP configs (skip repos that already have MCP config)
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --skip-existing
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml --skip-existing
 
 # Merge new MCP servers with existing ones (keep existing, add new)
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --merge
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml --merge
 
 # Merge with overwrite option (replace existing servers if they have the same name)
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --merge --overwrite-existing
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml --merge --overwrite-existing
 
 # Force overwrite all MCP configuration (replace entirely)
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --force-overwrite
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml --force-overwrite
 ```
+
+### Command Line Options
+
+The `configure` command supports these options:
+
+- `--repos <file>` - Repository configuration file (required)
+- `--mcp-config <file>` - MCP server configuration file (required)  
+- `--secrets <file>` - Optional secrets and variables configuration file
+- `--dry-run` - Preview changes without applying them
+- `--skip-existing` - Skip repositories with existing MCP configuration
+- `--merge` - Merge new MCP servers with existing ones
+- `--overwrite-existing` - When merging, overwrite existing servers with same names
+- `--force-overwrite` - Replace entire MCP configuration
+- `--concurrency <number>` - Number of repositories to process in parallel (default: 3)
+- `--verbose` - Enable verbose logging
+- `--resume` - Resume from last failed repository (planned feature)
+- `--retry-failed` - Retry only failed repositories from previous run (planned feature)
 
 ### Repository Selection Options
 
@@ -163,11 +226,17 @@ filters:
   topics: ["copilot", "automation"]  # Only repos with these topics
   exclude: ["myusername/old-project"]  # Exclude specific repos
   
-# Option 4: Pattern matching
-repositories:
-  patterns:
-    - "myusername/*-service"  # All repos ending with -service
-    - "myusername/app-*"      # All repos starting with app-
+# Option 4: Pattern matching (planned feature)
+# repositories:
+#   patterns:
+#     - "myusername/*-service"  # All repos ending with -service
+#     - "myusername/app-*"      # All repos starting with app-
+
+# Processing options
+options:
+  skip_existing: true  # Skip repos with existing MCP config
+  concurrency: 1       # Process repos one at a time for safety
+  verbose: true        # Enable detailed logging
 ```
 
 ### MCP Server Configuration
@@ -239,79 +308,50 @@ variables:
 - **Credential injection** - Authentication tokens are injected securely without disk storage
 - **No persistent storage** - Browser sessions are cleaned up after each operation
 
-## 🔧 Advanced Usage
+## 🔧 Implementation Details
 
-### Repository Filtering
+### Architecture
 
-Apply configuration to specific repository subsets:
+The tool is built with a modular TypeScript architecture:
 
-```bash
-# Apply to all your own repositories
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --owner-only
+- **Configuration Engine** (`src/engine.ts`) - Main orchestrator coordinating all operations
+- **GitHub CLI Integration** (`src/github/cli.ts`) - Repository discovery, secrets, and variables management
+- **Browser Automation** (`src/browser/automator.ts`) - MCP configuration via Playwright
+- **Configuration Parser** (`src/config/parser.ts`) - YAML parsing and validation
+- **CLI Interface** (`src/cli.ts`) - Command-line interface using Commander.js
+- **Type Definitions** (`src/types/index.ts`) - TypeScript interfaces for type safety
 
-# Apply to repositories with specific topics
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --topics "copilot,automation"
+### Technology Stack
 
-# Apply to repositories matching name patterns
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --pattern "*-service"
+- **Runtime**: Node.js 18+
+- **Language**: TypeScript for type safety and modern JavaScript features
+- **CLI Framework**: Commander.js for robust command-line interface
+- **Browser Automation**: Playwright for reliable web automation
+- **Configuration**: js-yaml for YAML file parsing
+- **Logging**: Winston for structured logging
+- **UI**: Chalk and Ora for colorful CLI output with progress indicators
 
-# Exclude specific repositories
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --exclude "myusername/old-project,myusername/archive"
-```
-
-### MCP Configuration Strategies
-
-Different approaches for handling existing MCP configurations:
-
-```bash
-# Conservative: Skip repositories that already have MCP config
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --skip-existing
-
-# Additive: Add new MCP servers, keep existing ones
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --merge
-
-# Smart merge: Add new servers, update existing ones with same name
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --merge --overwrite-existing
-
-# Complete replacement: Replace entire MCP configuration
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --force-overwrite
-```
-
-### Parallel Processing
-
-Control concurrency for large repository sets:
+### Development
 
 ```bash
-# Process 3 repositories simultaneously (default)
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --concurrency 3
+# Development mode with TypeScript compilation
+npm run dev -- configure --repos examples/basic-repos.yaml --mcp-config examples/basic-mcp-config.yaml --dry-run
 
-# Single repository at a time (safest)
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --concurrency 1
+# Build TypeScript to JavaScript
+npm run build
 
-# Higher concurrency for faster processing (if you have many repos)
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --concurrency 5
-```
+# Run linting
+npm run lint
 
-### Error Recovery
-
-Handle failures gracefully:
-
-```bash
-# Resume from last failed repository
-npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml --resume
-
-# Retry only failed repositories from previous run
-npm run configure -- --retry-failed
-
-# Generate detailed error report
-npm run configure -- --error-report
+# Run tests (when available)
+npm test
 ```
 
 ## 📊 Monitoring and Reporting
 
 ### Operation Logs
 
-All operations are logged to `operations.log` with:
+All operations are logged to `operations.log` with structured JSON format:
 - Timestamp and repository information
 - MCP configuration changes made
 - Success/failure status with error details
@@ -319,42 +359,66 @@ All operations are logged to `operations.log` with:
 
 ### Progress Tracking
 
-Monitor bulk operations in real-time:
-- Progress bars for multi-repository operations
-- Real-time status updates for each repository
-- ETA calculations based on processing speed
-- Immediate notifications of failures with suggested fixes
+Monitor bulk operations with real-time feedback:
+- Spinner progress indicators for current operations
+- Colored output showing success/failure status
+- Detailed error messages with suggested fixes
+- Summary reports after completion
 
-### Summary Reports
+### Example Output
 
-After each operation, generate summary reports showing:
-- Total repositories processed
-- MCP configurations added/updated/skipped
-- Any secrets or variables configured
-- Detailed error information for failed repositories
+```bash
+🚀 GitHub Copilot Agent Bulk Configurator
 
-## ⚠️ Limitations and Known Issues
+✅ Found 5 repositories to configure
 
-### Current Limitations
+🔍 DRY RUN MODE - No changes will be applied
 
-- **MCP Configuration**: Requires browser automation as GitHub doesn't provide API access for MCP settings
-- **Personal Accounts Only**: Designed for individual GitHub accounts, not organization/enterprise features
-- **Rate Limiting**: GitHub API rate limits may slow operations with many repositories
-- **Browser Dependencies**: Requires Chrome/Chromium for web automation features
+📋 Configuration Preview
 
-### Known Issues
+Repositories to configure (5):
+  • myusername/repo1
+  • myusername/repo2
+  • myusername/repo3
+  • myusername/repo4
+  • myusername/repo5
 
-- **Session Timeouts**: Very long operations may require re-authentication
-- **Large Repository Sets**: Memory usage increases with repository count (process in batches if needed)
-- **Network Connectivity**: Requires stable internet for browser automation components
-- **MCP Field Changes**: If GitHub changes the MCP configuration interface, browser automation may need updates
+MCP servers to configure:
+  • github (enabled: true)
+  • playwright (enabled: true)
+  • filesystem (enabled: true)
 
-### Workarounds
+Merge strategy: skip
 
-- Use multiple authentication tokens if you hit rate limits frequently
-- Process repositories in smaller batches for very large repository sets
-- Use `--resume` flag to continue after interruptions
-- Keep browser automation updated if GitHub changes their interface
+Run without --dry-run to apply these changes.
+```
+
+## ⚠️ Current Limitations
+
+### Implementation Status
+
+**✅ Completed Features:**
+- Complete TypeScript implementation with type safety
+- Configuration file parsing and validation
+- GitHub CLI integration for repository management
+- Browser automation framework for MCP configuration
+- Full CLI interface with multiple commands
+- Comprehensive error handling and logging
+- Dry-run mode for safe operations
+
+**⚠️ Known Limitations:**
+- **MCP Configuration**: Browser automation may need updates if GitHub changes their Copilot settings interface
+- **Pattern Matching**: Repository pattern matching is planned but not yet implemented
+- **Resume/Retry**: Resume and retry functionality is planned but not yet implemented
+- **Rate Limiting**: No built-in rate limiting for GitHub API calls
+- **Session Persistence**: Browser sessions don't persist across runs
+
+**🔄 Planned Enhancements:**
+- Repository pattern matching support (`myusername/*-service`)
+- Resume from failed operations
+- Retry failed repositories from previous runs
+- Enhanced error recovery mechanisms
+- Performance optimizations for large repository sets
 
 ## 🤝 Contributing
 
@@ -364,23 +428,51 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ```bash
 # Clone and setup development environment
-git clone https://github.com/your-org/bulk-github-copilot-agent-config
+git clone https://github.com/raymondlowe/bulk-github-copilot-agent-config
 cd bulk-github-copilot-agent-config
 npm install
 
-# Run tests
-npm test
+# Build the project
+npm run build
 
-# Run with development logging
-npm run dev -- --config config.yaml --dry-run
+# Run development mode
+npm run dev -- configure --help
+
+# Run validation tests
+npm run configure -- validate --repos examples/basic-repos.yaml --mcp-config examples/basic-mcp-config.yaml
 ```
 
-### Testing
+### Code Structure
 
+```
+src/
+├── cli.ts              # Command-line interface
+├── engine.ts           # Main orchestration engine
+├── index.ts            # Public API exports
+├── types/
+│   └── index.ts        # TypeScript type definitions
+├── config/
+│   └── parser.ts       # Configuration file parsing
+├── github/
+│   └── cli.ts          # GitHub CLI integration
+├── browser/
+│   └── automator.ts    # Browser automation for MCP
+└── utils/
+    └── logger.ts       # Logging utilities
+```
+
+### Testing Approach
+
+Currently the tool can be tested using:
+- Configuration validation with example files
+- Dry-run mode to preview operations without applying changes
+- Authentication checks to verify GitHub CLI setup
+- Repository listing to verify discovery logic
+
+Future testing enhancements will include:
 - Unit tests for configuration parsing and validation
 - Integration tests with GitHub API mocking
 - End-to-end tests with test repositories
-- Security tests for credential handling
 
 ## 📄 License
 
