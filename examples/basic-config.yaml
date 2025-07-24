@@ -1,0 +1,20 @@
+# Basic Repository List Example
+# This file specifies which repositories to configure
+
+# Option 1: Specify individual repositories
+repositories:
+  - "myusername/web-app"
+  - "myusername/api-service" 
+  - "myusername/mobile-app"
+  - "myusername/blog-site"
+
+# Execution options
+options:
+  # Skip repositories that already have MCP configuration
+  skip_existing: true
+  
+  # Number of repositories to process in parallel
+  concurrency: 3
+  
+  # Enable detailed logging
+  verbose: true

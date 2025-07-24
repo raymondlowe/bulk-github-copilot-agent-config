@@ -1,0 +1,33 @@
+# All Accessible Repositories Example
+# This configuration applies to all repositories you have access to
+
+# Apply to all repositories you have access to
+all_accessible_repos: true
+
+# Filters to control which repositories are included
+filters:
+  # Only include repositories you own (not just collaborate on)
+  owner_only: true
+  
+  # Only include repositories with specific topics
+  topics:
+    - "copilot-enabled"
+    - "automation"
+    - "personal-project"
+  
+  # Exclude specific repositories
+  exclude:
+    - "myusername/archived-project"
+    - "myusername/template-repo"
+    - "myusername/old-experiment"
+
+# Processing options
+options:
+  # Merge new MCP servers with existing ones (don't overwrite)
+  merge: true
+  
+  # Process multiple repositories in parallel
+  concurrency: 3
+  
+  # Continue processing even if some repositories fail
+  continue_on_error: true

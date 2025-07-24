@@ -1,0 +1,20 @@
+# Basic Repository Selection Example
+# This file defines which repositories to configure
+
+# Option 1: Specify individual repositories
+repositories:
+  - "myusername/personal-website"
+  - "myusername/blog-app"
+  - "myusername/utility-scripts"
+  - "myusername/learning-project"
+
+# Processing options
+options:
+  # Skip repositories that already have MCP configuration
+  skip_existing: true
+  
+  # Process repositories one at a time for safety
+  concurrency: 1
+  
+  # Enable detailed logging
+  verbose: true
