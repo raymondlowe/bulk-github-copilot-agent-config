@@ -1,35 +1,59 @@
 # Example Configuration Files
 
-This directory contains example configuration files for various use cases of the Bulk GitHub Copilot Agent Configurator.
+This directory contains example configuration files for the Bulk GitHub Copilot Agent Configurator. The tool uses separate configuration files for different purposes.
 
-## Basic Configuration
+## Configuration File Types
 
-See [`basic-config.yaml`](./basic-config.yaml) for a simple configuration that sets up:
-- GitHub and Playwright MCP servers
-- Basic repository secrets
-- Standard security settings
+### Repository Selection Files
+These files specify which repositories to configure:
 
-## Enterprise Configuration
+- **[`basic-repos.yaml`](./basic-repos.yaml)** - Simple list of specific repositories
+- **[`all-repos.yaml`](./all-repos.yaml)** - Apply to all accessible repositories with filters
+- **[`pattern-based-repos.yaml`](./pattern-based-repos.yaml)** - Use patterns to select repositories
 
-See [`enterprise-config.yaml`](./enterprise-config.yaml) for an enterprise setup that includes:
-- Multiple MCP servers with custom configurations
-- Organization-level secrets and policies
-- Advanced security and compliance settings
-- Firewall and IP allowlist configurations
+### MCP Configuration Files
+These files contain the actual MCP server configurations to be applied:
 
-## Development Configuration
+- **[`basic-mcp-config.yaml`](./basic-mcp-config.yaml)** - Simple GitHub + Playwright setup
+- **[`advanced-mcp-config.yaml`](./advanced-mcp-config.yaml)** - Multiple MCP servers with advanced features
 
-See [`dev-config.yaml`](./dev-config.yaml) for development environments:
-- Development-specific MCP servers
-- Test repository configurations
-- Relaxed security for development workflows
+### Optional Configuration Files
+Additional configuration for repository secrets and variables:
 
-## Production Configuration
+- **[`secrets.yaml`](./secrets.yaml)** - Repository secrets and variables needed by MCP servers
+- **[`basic-config.yaml`](./basic-config.yaml)** - Legacy single-file format (maintained for compatibility)
 
-See [`production-config.yaml`](./production-config.yaml) for production deployments:
-- Production-hardened security settings
-- Compliance-focused configurations
-- Enhanced audit and monitoring
+## Usage Examples
+
+### Basic Usage
+```bash
+# Apply MCP configuration to specific repositories
+npm run configure -- --repos basic-repos.yaml --mcp-config basic-mcp-config.yaml --apply
+
+# Include secrets configuration
+npm run configure -- --repos basic-repos.yaml --mcp-config basic-mcp-config.yaml --secrets secrets.yaml --apply
+```
+
+### Advanced Usage
+```bash
+# Apply to all accessible repositories with filtering
+npm run configure -- --repos all-repos.yaml --mcp-config advanced-mcp-config.yaml --apply
+
+# Use pattern-based repository selection
+npm run configure -- --repos pattern-based-repos.yaml --mcp-config basic-mcp-config.yaml --apply
+```
+
+### MCP Configuration Handling Options
+```bash
+# Don't overwrite existing MCP configurations
+npm run configure -- --repos all-repos.yaml --mcp-config basic-mcp-config.yaml --skip-existing
+
+# Merge new MCP servers with existing ones
+npm run configure -- --repos all-repos.yaml --mcp-config basic-mcp-config.yaml --merge
+
+# Merge and overwrite servers with same names
+npm run configure -- --repos all-repos.yaml --mcp-config basic-mcp-config.yaml --merge --overwrite-existing
+```
 
 ## Configuration Validation
 
@@ -44,7 +68,14 @@ npm run validate-config -- path/to/your/config.yaml
 All configurations support environment variable substitution using the `{{ env.VARIABLE_NAME }}` syntax. Common environment variables include:
 
 - `GITHUB_TOKEN`: GitHub personal access token
-- `GITHUB_ORG`: Default organization name
-- `API_KEY`: Generic API key for custom integrations
-- `VAULT_ADDR`: HashiCorp Vault address
+- `CUSTOM_API_TOKEN`: API key for custom MCP servers
+- `DATABASE_URL`: Database connection string
 - `LOG_LEVEL`: Logging verbosity level
+
+## Configuration Tips
+
+1. **Start Simple**: Begin with `basic-repos.yaml` and `basic-mcp-config.yaml`
+2. **Test First**: Always use `--dry-run` to preview changes before applying
+3. **Use Filters**: When applying to all repositories, use filters to avoid unintended changes
+4. **Separate Concerns**: Keep repository selection, MCP configuration, and secrets in separate files
+5. **Version Control**: Store your configuration files in version control for change tracking

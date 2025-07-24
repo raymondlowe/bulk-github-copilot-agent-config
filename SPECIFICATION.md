@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document outlines the technical architecture and implementation details for a tool that automates the bulk configuration of GitHub Copilot agent settings across multiple repositories. The tool employs a hybrid approach combining GitHub CLI for API-accessible operations and browser automation for web-only settings.
+This document outlines the technical architecture and implementation details for a tool that automates the bulk configuration of GitHub Copilot agent MCP (Model Context Protocol) settings across personal repositories. The tool employs a hybrid approach combining GitHub CLI for repository secrets/variables and browser automation for MCP configuration.
 
 ## 1. Architecture Overview
 
@@ -12,7 +12,7 @@ This document outlines the technical architecture and implementation details for
 ┌─────────────────────────────────────────────────────────────┐
 │                  Configuration Engine                       │
 ├─────────────────┬─────────────────┬─────────────────────────┤
-│   Config Parser │   Orchestrator  │    Audit & Logging     │
+│   Config Parser │   Orchestrator  │    Logging & Reports    │
 ├─────────────────┼─────────────────┼─────────────────────────┤
 │                 │                 │                         │
 │  ┌─────────────┐│  ┌─────────────┐│  ┌─────────────────────┐│
@@ -27,150 +27,226 @@ This document outlines the technical architecture and implementation details for
 #### Configuration Engine
 - **Purpose**: Central orchestration of configuration tasks
 - **Responsibilities**: 
-  - Parse and validate configuration files
+  - Parse and validate separate configuration files (repos, MCP config, secrets)
   - Coordinate between CLI and browser automation
   - Manage execution flow and error handling
+  - Handle MCP configuration merge strategies
 
 #### GitHub CLI Integration
 - **Purpose**: Handle API-accessible operations
 - **Capabilities**:
   - Repository secrets management
-  - Organization variables
-  - Basic repository settings
+  - Repository variables
+  - Repository discovery and filtering
   - User authentication
 
 #### Browser Automation Module
-- **Purpose**: Handle web-only configuration operations
+- **Purpose**: Handle MCP configuration operations
 - **Capabilities**:
-  - MCP server configuration
-  - Advanced security settings
-  - Organization-level firewall rules
-  - Settings not exposed via API
+  - Navigate to GitHub Copilot agent settings
+  - Read existing MCP configurations
+  - Apply new/merged MCP configurations
+  - Handle authentication and session management
 
-#### Credential Management
-- **Purpose**: Secure handling of sensitive data
-- **Features**:
-  - Environment variable injection
-  - External secret manager integration
-  - Token rotation and validation
-  - Audit trail maintenance
+#### Repository Selection Engine
+- **Purpose**: Flexible repository targeting
+- **Capabilities**:
+  - Individual repository specification
+  - "All accessible repos" discovery
+  - Pattern-based matching
+  - Topic and metadata filtering
 
-## 2. Configuration Mapping
+## 2. Configuration System
 
-### 2.1 API-Accessible via GitHub CLI
+### 2.1 Separate Configuration Files
 
-| Configuration Type | CLI Command | Scope | Permissions Required |
-|-------------------|-------------|-------|---------------------|
-| Repository Secrets | `gh secret set` | Repository | Admin |
-| Organization Secrets | `gh secret set --org` | Organization | Owner |
-| Repository Variables | `gh variable set` | Repository | Admin |
-| Repository Settings | `gh repo edit` | Repository | Admin |
-| Branch Protection | `gh api` calls | Repository | Admin |
+The tool uses a multi-file configuration approach for clarity and flexibility:
 
-### 2.2 Browser Automation Required
+#### Repository Selection (`repos.yaml`)
+```yaml
+# Option 1: Explicit repository list
+repositories:
+  - "username/repo1"
+  - "username/repo2"
 
-| Configuration Type | Location | Navigation Path | Permissions Required |
-|-------------------|----------|-----------------|---------------------|
-| MCP Server Config | Repository Settings | Settings → Copilot → Coding agent | Admin |
-| IP Allow Lists | Organization Settings | Settings → Authentication security | Owner |
-| Enterprise Security | Enterprise Settings | Settings → Security → Authentication | Enterprise Owner |
-| Advanced Branch Rules | Repository Settings | Settings → Branches → Protection rules | Admin |
-| Security Analysis | Repository Settings | Settings → Security & analysis | Admin |
+# Option 2: All accessible repositories
+all_accessible_repos: true
+filters:
+  owner_only: true
+  topics: ["copilot-enabled"]
+  exclude: ["username/old-repo"]
 
-### 2.3 Hybrid Operations
+# Option 3: Pattern-based selection
+repositories:
+  patterns:
+    - "username/*-service"
+    - "username/app-*"
+```
 
-Some configurations require both approaches:
-- **Security Policies**: CLI for basic settings, browser for advanced options
-- **Access Controls**: CLI for team permissions, browser for fine-grained rules
-- **Integration Settings**: CLI for webhooks, browser for advanced integrations
+#### MCP Configuration (`mcp-config.yaml`)
+```yaml
+# This content gets inserted into the GitHub Copilot Agent MCP field
+github:
+  enabled: true
+  config:
+    token_source: "env:GITHUB_TOKEN"
 
-## 3. Security Framework
+playwright:
+  enabled: true
+  config:
+    headless: true
+```
+
+#### Optional Secrets (`secrets.yaml`)
+```yaml
+secrets:
+  CUSTOM_API_TOKEN: "{{ env.CUSTOM_API_TOKEN }}"
+  
+variables:
+  LOG_LEVEL: "info"
+```
+
+### 2.2 MCP Configuration Handling Strategies
+
+| Strategy | Behavior | Use Case |
+|----------|----------|----------|
+| `--skip-existing` | Skip repos with existing MCP config | Conservative, no overwrites |
+| `--merge` | Add new servers, keep existing | Additive configuration |
+| `--merge --overwrite-existing` | Merge, update servers with same names | Smart merge with updates |
+| `--force-overwrite` | Replace entire MCP configuration | Complete replacement |
+
+### 2.3 API Operations vs Browser Automation
+
+#### GitHub CLI Operations
+| Configuration Type | CLI Command | Permissions Required |
+|-------------------|-------------|---------------------|
+| Repository Secrets | `gh secret set` | Repository Admin |
+| Repository Variables | `gh variable set` | Repository Admin |
+| Repository Discovery | `gh repo list` | Read access |
+| Repository Metadata | `gh repo view` | Read access |
+
+#### Browser Automation Required
+| Configuration Type | Location | Navigation Path |
+|-------------------|----------|-----------------|
+| MCP Server Config | Repository Settings | Settings → Copilot → Coding agent |
+| Read Existing MCP | Repository Settings | Same as above |
+| Update MCP Config | Repository Settings | Same as above |
+
+## 3. Security and Authentication
 
 ### 3.1 Authentication Architecture
 
 ```yaml
 authentication:
   github_cli:
-    method: "oauth_token"
-    scope: ["repo", "admin:org", "admin:enterprise"]
-    token_source: "environment"
-    refresh_strategy: "automatic"
+    method: "personal_access_token"
+    scope: ["repo", "read:user"]
+    token_source: "gh auth status"
+    refresh_strategy: "manual"
   
   browser_automation:
-    method: "session_injection"
-    session_duration: "30_minutes"
+    method: "session_inheritance"
+    source: "github_cli_session"
     isolation: "per_repository"
     cleanup: "automatic"
 ```
 
-### 3.2 Credential Security
+### 3.2 Credential Management
 
-#### Storage Principles
-- **No Persistent Storage**: Credentials never written to disk
-- **Memory Protection**: Sensitive data cleared after use
-- **Environment Variables**: Primary source for secrets
-- **External Integrations**: Support for HashiCorp Vault, AWS Secrets Manager
+#### Environment Variables
+- **Source**: Environment variables for sensitive data
+- **Pattern**: `{{ env.VARIABLE_NAME }}` in configuration files
+- **Security**: Never stored in plain text, injected at runtime
 
-#### Token Management
-```typescript
-interface TokenManager {
-  rotateToken(service: string): Promise<string>;
-  validateToken(token: string): Promise<boolean>;
-  getTokenExpiry(token: string): Date;
-  refreshToken(service: string): Promise<string>;
-}
-```
+#### GitHub Authentication
+- **Method**: GitHub CLI personal access token
+- **Permissions**: Repository admin access for target repositories
+- **Session**: Shared between CLI and browser automation
 
-### 3.3 Audit and Compliance
+### 3.3 Security Considerations
 
-#### Audit Log Structure
+#### Personal Account Focus
+- **Scope**: Individual GitHub accounts only
+- **Permissions**: Repository-level admin access required
+- **No Organization Features**: No org-level secrets, policies, or firewall rules
+
+#### Browser Security
+- **Headless Mode**: No GUI, runs in background
+- **Session Isolation**: Each repository uses separate browser context
+- **Credential Injection**: Tokens injected programmatically, not stored
+- **Automatic Cleanup**: Browser sessions cleaned up after each repository
+
+### 3.4 Simple Logging
+
+#### Log Structure
 ```json
 {
   "timestamp": "2024-01-15T10:30:00Z",
-  "operation_id": "config-batch-001",
-  "user": {
-    "github_username": "admin-user",
-    "session_id": "sess_abc123"
-  },
-  "repository": "org/repo-name",
-  "action": "mcp_server_update",
+  "repository": "username/repo-name",
+  "action": "mcp_config_update",
   "changes": {
     "before": { "servers": [] },
     "after": { "servers": [{"name": "github", "enabled": true}] }
   },
   "status": "success",
   "duration_ms": 1250,
-  "metadata": {
-    "config_version": "1.2.0",
-    "automation_method": "browser"
-  }
+  "merge_strategy": "merge"
 }
 ```
 
-#### Compliance Features
-- **SOX Compliance**: Immutable audit logs with cryptographic signatures
-- **GDPR Compliance**: PII scrubbing in logs and screenshots
-- **SOC 2**: Access controls and segregation of duties
-- **FedRAMP**: Enhanced security controls for government deployments
+#### Logging Features
+- **Operation Tracking**: All configuration changes logged
+- **Before/After States**: Clear change documentation
+- **Error Details**: Comprehensive error information for troubleshooting
+- **Performance Metrics**: Timing and success rates
 
-## 4. Workflow Design
+## 4. Implementation Design
 
 ### 4.1 Configuration Processing Pipeline
 
 ```mermaid
 graph TD
-    A[Load Configuration] --> B[Validate Schema]
-    B --> C[Authenticate Services]
-    C --> D[Discover Repositories]
-    D --> E[Plan Operations]
-    E --> F[Execute CLI Operations]
-    F --> G[Execute Browser Operations]
-    G --> H[Verify Changes]
-    H --> I[Generate Report]
+    A[Load Repository Config] --> B[Load MCP Config]
+    B --> C[Validate Configurations]
+    C --> D[Authenticate GitHub CLI]
+    D --> E[Discover Target Repositories]
+    E --> F[Plan Operations]
+    F --> G[Execute CLI Operations]
+    G --> H[Execute Browser Operations]
+    H --> I[Verify Changes]
+    I --> J[Generate Report]
     
-    B -->|Invalid| J[Error Report]
-    C -->|Failed| J
-    F -->|Failed| K[Retry Logic]
+    C -->|Invalid| K[Error Report]
+    D -->|Failed| K
+    G -->|Failed| L[Retry Logic]
+    H -->|Failed| L
+    L --> M[Partial Success Report]
+```
+
+### 4.2 MCP Configuration Workflow
+
+#### Reading Existing Configuration
+1. Navigate to repository Copilot settings
+2. Extract existing MCP configuration JSON
+3. Parse and validate structure
+4. Store current state for comparison
+
+#### Applying New Configuration
+1. Determine merge strategy from options
+2. Apply merge logic (skip, merge, overwrite)
+3. Validate final configuration
+4. Submit changes via browser automation
+5. Verify application success
+
+#### Merge Strategies Implementation
+```typescript
+interface MCPMerger {
+  skip(existing: MCPConfig, new: MCPConfig): MCPConfig;
+  merge(existing: MCPConfig, new: MCPConfig): MCPConfig;
+  mergeWithOverwrite(existing: MCPConfig, new: MCPConfig): MCPConfig;
+  forceOverwrite(existing: MCPConfig, new: MCPConfig): MCPConfig;
+}
+```
     G -->|Failed| K
     K --> L[Partial Success Report]
 ```
@@ -194,421 +270,339 @@ interface ErrorHandler {
 }
 ```
 
-#### Retry Mechanisms
-- **Exponential Backoff**: For rate limiting and transient failures
-- **Circuit Breaker**: Prevent cascading failures
-- **Partial Recovery**: Continue with successful repositories
-- **State Persistence**: Resume from failure points
+### 4.3 Error Handling Strategy
 
-### 4.3 Concurrency Control
+#### Error Classification
+```typescript
+enum ErrorSeverity {
+  RECOVERABLE = "recoverable",    // Retry possible
+  CONFIGURATION = "config",       // User action required  
+  PERMISSION = "permission",      // Access issue
+  FATAL = "fatal"                // Stop execution
+}
+```
+
+#### Recovery Mechanisms
+- **Automatic Retry**: For transient browser/network issues
+- **Skip and Continue**: For permission errors on specific repositories
+- **Resume Operations**: Save progress and resume from last successful repository
+- **Detailed Logging**: Comprehensive error information for troubleshooting
+
+### 4.4 Repository Discovery
+
+#### Discovery Methods
+1. **Explicit List**: Direct repository specification
+2. **All Accessible**: Query user's accessible repositories via GitHub API
+3. **Pattern Matching**: Filter repositories by name patterns
+4. **Topic Filtering**: Filter by repository topics and metadata
+
+#### Implementation
+```typescript
+interface RepositoryDiscovery {
+  explicitList(repos: string[]): Repository[];
+  allAccessible(filters: RepoFilters): Repository[];
+  byPattern(patterns: string[]): Repository[];
+  byTopics(topics: string[]): Repository[];
+}
+```
+
+### 4.5 Concurrency Control
 
 #### Repository Processing
 ```yaml
 concurrency:
-  max_parallel_repos: 5
-  cli_rate_limit: 5000  # requests per hour
-  browser_sessions: 3
+  max_parallel_repos: 3        # Conservative for personal use
+  browser_sessions: 1          # Single browser instance
   timeout_settings:
     cli_operation: 30s
     browser_operation: 60s
-    total_workflow: 30m
+    total_workflow: 20m
 ```
 
 #### Resource Management
-- **Connection Pooling**: Reuse GitHub API connections
-- **Browser Instance Management**: Minimize Chrome instances
-- **Memory Monitoring**: Prevent resource exhaustion
-- **Graceful Degradation**: Reduce concurrency on failures
+- **Simple Connection Reuse**: Reuse GitHub CLI authentication
+- **Single Browser Instance**: Minimize resource usage
+- **Progressive Processing**: Handle repositories one-by-one for MCP config
+- **Graceful Failure Handling**: Continue with remaining repositories on errors
 
 ## 5. Implementation Phases
 
-### 5.1 Phase 1: Core Infrastructure (Weeks 1-3)
+## 5. Implementation Phases
+
+### 5.1 Phase 1: Core Infrastructure (Weeks 1-2)
 
 #### Deliverables
-- [ ] Configuration parser and validator
+- [ ] Multi-file configuration parser (repos.yaml, mcp-config.yaml, secrets.yaml)
 - [ ] GitHub CLI integration wrapper
-- [ ] Basic credential management
-- [ ] Audit logging framework
+- [ ] Repository discovery engine
+- [ ] Basic logging framework
 - [ ] Unit test suite (>80% coverage)
 
 #### Technical Tasks
 ```typescript
-// Configuration schema definition
-interface ConfigSchema {
-  repositories: string[];
-  mcp_servers: MCPServerConfig[];
-  secrets: SecretConfig;
-  security: SecurityConfig;
-  options: ExecutionOptions;
+// Configuration schema definitions
+interface RepoConfig {
+  repositories?: string[];
+  all_accessible_repos?: boolean;
+  filters?: RepoFilters;
+  options?: ProcessingOptions;
+}
+
+interface MCPConfig {
+  [serverName: string]: {
+    enabled: boolean;
+    config: Record<string, any>;
+  };
 }
 
 // CLI wrapper implementation
 class GitHubCLI {
+  async listUserRepos(filters: RepoFilters): Promise<Repository[]>;
   async setSecret(repo: string, name: string, value: string): Promise<void>;
   async setVariable(repo: string, name: string, value: string): Promise<void>;
-  async updateRepoSettings(repo: string, settings: RepoSettings): Promise<void>;
 }
 ```
 
-### 5.2 Phase 2: Browser Automation (Weeks 4-6)
+### 5.2 Phase 2: Browser Automation (Weeks 3-4)
 
 #### Deliverables
 - [ ] Playwright-based automation framework
 - [ ] MCP server configuration automation
-- [ ] Session management and security
+- [ ] MCP merge strategy implementation
 - [ ] Integration tests with test repositories
 
 #### Technical Implementation
 ```typescript
 class BrowserAutomator {
   private browser: Browser;
-  private contexts: Map<string, BrowserContext>;
   
-  async configureMCPServers(repo: string, config: MCPConfig): Promise<void>;
-  async updateFirewallRules(org: string, rules: FirewallRule[]): Promise<void>;
-  async captureScreenshot(context: string, purpose: string): Promise<Buffer>;
+  async readMCPConfig(repo: string): Promise<MCPConfig>;
+  async updateMCPConfig(repo: string, config: MCPConfig): Promise<void>;
+  async mergeMCPConfig(existing: MCPConfig, new: MCPConfig, strategy: MergeStrategy): Promise<MCPConfig>;
 }
 ```
 
-### 5.3 Phase 3: Enterprise Features (Weeks 7-9)
+### 5.3 Phase 3: Advanced Features (Weeks 5-6)
 
 #### Deliverables
-- [ ] Organization-level bulk operations
-- [ ] Advanced security configurations
-- [ ] Compliance reporting
-- [ ] Performance optimization
+- [ ] Pattern-based repository selection
+- [ ] Resume and retry functionality
+- [ ] Comprehensive error handling
+- [ ] Progress reporting and summaries
 
 #### Advanced Features
-- **Policy Templates**: Predefined security configurations
-- **Drift Detection**: Monitor configuration changes
-- **Rollback Capabilities**: Undo bulk changes
-- **Integration APIs**: External system connections
+- **Smart Filtering**: Topic-based and metadata filtering
+- **Progress Tracking**: Real-time status updates
+- **Error Recovery**: Resume from interruptions
+- **Batch Processing**: Efficient handling of large repository sets
 
-### 5.4 Phase 4: Production Readiness (Weeks 10-12)
+### 5.4 Phase 4: Polish and Documentation (Week 7-8)
 
 #### Deliverables
-- [ ] Production deployment scripts
-- [ ] Monitoring and alerting
-- [ ] Documentation and training materials
-- [ ] Security audit and penetration testing
+- [ ] Complete documentation and examples
+- [ ] CLI interface improvements
+- [ ] Performance optimization
+- [ ] User experience enhancements
 
-## 6. API Design
+## 6. CLI Interface Design
 
-### 6.1 Configuration API
+### 6.1 Command Structure
+
+```bash
+# Basic usage
+npm run configure -- --repos repos.yaml --mcp-config mcp-config.yaml [options]
+
+# Configuration files
+--repos <file>           # Repository selection configuration
+--mcp-config <file>      # MCP server configuration
+--secrets <file>         # Optional secrets and variables
+
+# MCP handling options
+--skip-existing         # Skip repos with existing MCP config
+--merge                 # Merge new MCP servers with existing
+--merge --overwrite-existing  # Merge and overwrite matching servers
+--force-overwrite       # Replace entire MCP configuration
+
+# Processing options
+--dry-run              # Preview changes without applying
+--concurrency <n>      # Number of parallel repositories (default: 3)
+--resume               # Resume from last failed repository
+--retry-failed         # Retry only failed repositories
+
+# Output options
+--verbose              # Detailed logging
+--quiet                # Minimal output
+--json                 # JSON output format
+--error-report         # Generate detailed error report
+```
+
+### 6.2 Configuration Validation
 
 ```typescript
-interface ConfigurationAPI {
-  // Repository operations
-  configureRepository(repo: string, config: RepoConfig): Promise<Result>;
-  bulkConfigureRepositories(repos: string[], config: RepoConfig): Promise<BulkResult>;
+interface ConfigValidator {
+  validateRepoConfig(config: RepoConfig): ValidationResult;
+  validateMCPConfig(config: MCPConfig): ValidationResult;
+  validateSecrets(config: SecretsConfig): ValidationResult;
   
-  // Organization operations
-  configureOrganization(org: string, config: OrgConfig): Promise<Result>;
-  
-  // Validation and planning
-  validateConfiguration(config: Configuration): ValidationResult;
-  planExecution(config: Configuration): ExecutionPlan;
-  
-  // Monitoring and reporting
-  getExecutionStatus(operationId: string): ExecutionStatus;
-  generateComplianceReport(scope: Scope): ComplianceReport;
+  // Cross-validation
+  validateCompatibility(repoConfig: RepoConfig, mcpConfig: MCPConfig): ValidationResult;
+}
+
+interface ValidationResult {
+  valid: boolean;
+  errors: ValidationError[];
+  warnings: ValidationWarning[];
 }
 ```
 
-### 6.2 Plugin Architecture
+### 6.3 Progress Reporting
 
 ```typescript
-interface ConfigurationPlugin {
-  name: string;
-  version: string;
-  supportedOperations: string[];
-  
-  configure(target: string, config: any): Promise<Result>;
-  validate(config: any): ValidationResult;
-  rollback(target: string, operation: string): Promise<Result>;
+interface ProgressReporter {
+  startOperation(totalRepos: number): void;
+  updateProgress(completed: number, current: string, status: string): void;
+  reportError(repo: string, error: Error): void;
+  generateSummary(): OperationSummary;
 }
 
-// Example plugin implementations
-class MCPServerPlugin implements ConfigurationPlugin {
-  // MCP-specific configuration logic
-}
-
-class FirewallPlugin implements ConfigurationPlugin {
-  // Firewall configuration logic
+interface OperationSummary {
+  totalRepositories: number;
+  successful: number;
+  failed: number;
+  skipped: number;
+  errors: RepositoryError[];
+  duration: number;
 }
 ```
 
-## 7. Monitoring and Observability
+## 7. Development and Testing
 
-### 7.1 Metrics Collection
+### 7.1 Local Development Setup
 
-```yaml
-metrics:
-  performance:
-    - operation_duration
-    - success_rate
-    - error_rate
-    - throughput_repos_per_hour
-  
-  reliability:
-    - retry_attempts
-    - failure_modes
-    - recovery_time
-    - session_stability
-  
-  security:
-    - authentication_failures
-    - permission_denials
-    - suspicious_activity
-    - audit_log_integrity
+```bash
+# Prerequisites
+node --version  # 18+
+gh --version    # GitHub CLI authenticated
+chromium --version  # or Chrome browser
+
+# Clone and setup
+git clone https://github.com/your-username/bulk-github-copilot-agent-config
+cd bulk-github-copilot-agent-config
+npm install
+
+# Development commands
+npm run dev       # Development mode with hot reload
+npm run test      # Run test suite
+npm run lint      # Code linting
+npm run build     # Production build
 ```
 
-### 7.2 Alerting Framework
+### 7.2 Testing Strategy
 
-```typescript
-interface AlertManager {
-  configureThresholds(metric: string, threshold: number): void;
-  sendAlert(severity: AlertSeverity, message: string): void;
-  escalateAlert(alertId: string): void;
-  acknowledgeAlert(alertId: string, user: string): void;
-}
-
-enum AlertSeverity {
-  INFO = "info",
-  WARNING = "warning",
-  CRITICAL = "critical",
-  EMERGENCY = "emergency"
-}
-```
-
-## 8. Deployment Architecture
-
-### 8.1 Container Strategy
-
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-
-# Install Chrome dependencies
-RUN apk add --no-cache chromium
-
-# Install GitHub CLI
-RUN apk add --no-cache github-cli
-
-# Application setup
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-
-# Security hardening
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S runner -u 1001
-USER runner
-
-CMD ["npm", "start"]
-```
-
-### 8.2 Infrastructure Requirements
-
-#### Minimum Requirements
-- **CPU**: 2 cores
-- **Memory**: 4GB RAM
-- **Storage**: 20GB SSD
-- **Network**: 100 Mbps internet connection
-- **OS**: Linux (Ubuntu 20.04+, RHEL 8+, Alpine 3.15+)
-
-#### Recommended Production Setup
-- **CPU**: 8 cores
-- **Memory**: 16GB RAM
-- **Storage**: 100GB NVMe SSD
-- **Network**: 1 Gbps internet connection
-- **Load Balancer**: For multiple instances
-- **Monitoring**: Prometheus + Grafana stack
-
-### 8.3 Scaling Considerations
-
-#### Horizontal Scaling
-```yaml
-scaling:
-  strategy: "repository_based_sharding"
-  load_balancing: "round_robin"
-  session_affinity: false
-  max_instances: 10
-  auto_scaling:
-    min_replicas: 2
-    max_replicas: 20
-    cpu_threshold: 70%
-    memory_threshold: 80%
-```
-
-#### Performance Optimization
-- **Repository Batching**: Process repositories in optimal batch sizes
-- **Connection Pooling**: Reuse HTTP connections
-- **Caching**: Cache repository metadata and authentication tokens
-- **Async Processing**: Non-blocking operations where possible
-
-## 9. Testing Strategy
-
-### 9.1 Test Categories
-
-#### Unit Tests (Target: 90% coverage)
-```typescript
-describe('ConfigurationParser', () => {
-  it('should validate YAML configuration schema');
-  it('should reject invalid repository patterns');
-  it('should handle environment variable substitution');
-});
-
-describe('GitHubCLI', () => {
-  it('should set repository secrets correctly');
-  it('should handle API rate limiting');
-  it('should retry on transient failures');
-});
-```
+#### Unit Tests
+- Configuration parsing and validation
+- Repository discovery logic
+- MCP merge strategy algorithms
+- Error handling and recovery
 
 #### Integration Tests
-```typescript
-describe('Browser Automation', () => {
-  it('should configure MCP servers via web interface');
-  it('should handle authentication session expiry');
-  it('should capture screenshots for audit purposes');
-});
-```
+- GitHub CLI command execution
+- Browser automation workflows
+- Authentication and session management
 
 #### End-to-End Tests
-```typescript
-describe('Full Workflow', () => {
-  it('should configure 10 test repositories successfully');
-  it('should generate complete audit logs');
-  it('should handle mixed success/failure scenarios');
-});
-```
+- Complete configuration workflows
+- Multiple repository processing
+- Error recovery scenarios
 
-### 9.2 Test Infrastructure
+### 7.3 Test Configuration
 
-#### Test Environment Setup
 ```yaml
-test_environment:
-  github_org: "bulk-config-test-org"
-  test_repositories: 20
-  mock_services:
-    - github_api_mock
-    - browser_recording_server
-  
-  security_testing:
-    - static_analysis: "sonarqube"
-    - dependency_scanning: "snyk"
-    - secrets_detection: "trufflesecurity"
+# test-config/repos.yaml - for testing
+repositories:
+  - "testuser/test-repo-1"
+  - "testuser/test-repo-2"
+
+options:
+  concurrency: 1
+  verbose: true
 ```
 
-#### Performance Testing
-- **Load Testing**: 100+ repositories in parallel
-- **Stress Testing**: Resource exhaustion scenarios
-- **Endurance Testing**: 24-hour continuous operation
-- **Chaos Engineering**: Network and service failures
+## 8. Security Considerations
 
-## 10. Risk Assessment and Mitigation
+### 8.1 Personal Account Security
 
-### 10.1 Technical Risks
+#### Authentication
+- GitHub CLI personal access token required
+- Token needs `repo` scope for repository access
+- Browser automation inherits CLI authentication session
 
-| Risk | Probability | Impact | Mitigation Strategy |
-|------|-------------|--------|-------------------|
-| GitHub API Rate Limiting | High | Medium | Token rotation, exponential backoff |
-| Browser Automation Instability | Medium | High | Headless mode, retry logic, fallback |
-| Authentication Token Expiry | Medium | Medium | Automatic refresh, monitoring |
-| Memory Leaks in Long Operations | Low | High | Resource monitoring, periodic restarts |
+#### Data Protection
+- No persistent credential storage
+- Environment variables for sensitive configuration
+- Automatic cleanup of browser sessions
+- Local operation logs only
 
-### 10.2 Security Risks
+#### Safe Defaults
+- Dry-run mode by default for destructive operations
+- Conservative concurrency limits
+- Comprehensive logging for audit purposes
+- Skip existing configurations by default
 
-| Risk | Probability | Impact | Mitigation Strategy |
-|------|-------------|--------|-------------------|
-| Credential Exposure | Low | Critical | Environment variables, no disk storage |
-| Session Hijacking | Low | High | HTTPS only, session isolation |
-| Unauthorized Repository Access | Medium | High | Least privilege, audit logging |
-| Supply Chain Attack | Low | Critical | Dependency scanning, signed packages |
+### 8.2 Risk Mitigation
 
-### 10.3 Operational Risks
+| Risk | Mitigation |
+|------|------------|
+| Accidental overwrites | Dry-run mode, skip-existing default |
+| Authentication exposure | Environment variables, no disk storage |
+| Rate limiting | Conservative concurrency, exponential backoff |
+| Browser instability | Headless mode, session isolation |
 
-| Risk | Probability | Impact | Mitigation Strategy |
-|------|-------------|--------|-------------------|
-| Configuration Errors | High | Medium | Dry-run mode, validation, rollback |
-| Partial Deployment Failures | Medium | Medium | Atomic operations, state recovery |
-| Service Downtime | Low | High | Health monitoring, graceful degradation |
-| Data Loss | Low | Critical | Immutable audit logs, backups |
+## 9. Future Enhancements
 
-## 11. Future Extensibility
+### 9.1 Planned Features
 
-### 11.1 Plugin System Design
+#### Phase 1 Extensions
+- **Repository Templates**: Save and reuse MCP configurations
+- **Diff Reporting**: Show exact changes before applying
+- **Backup/Restore**: Save current configurations before changes
+- **Configuration Profiles**: Named configuration sets for different use cases
 
-```typescript
-interface PluginRegistry {
-  register(plugin: ConfigurationPlugin): void;
-  unregister(pluginName: string): void;
-  getPlugin(name: string): ConfigurationPlugin;
-  listPlugins(): PluginInfo[];
-}
+#### Phase 2 Extensions
+- **GitHub App Support**: Alternative authentication method
+- **Configuration Validation**: Pre-flight checks for MCP server compatibility
+- **Rollback Capability**: Undo configuration changes
+- **Integration Testing**: Test MCP configurations before deployment
 
-interface PluginInfo {
-  name: string;
-  version: string;
-  description: string;
-  author: string;
-  supportedOperations: string[];
-  dependencies: string[];
-}
-```
+### 9.2 API Enhancement Opportunities
 
-### 11.2 Integration Points
+As GitHub expands their API capabilities, the tool can be enhanced to:
+- Use native API for MCP configuration (when available)
+- Reduce browser automation dependency
+- Improve reliability and performance
+- Add real-time configuration monitoring
 
-#### External Secret Managers
-- **HashiCorp Vault**: Enterprise secret management
-- **AWS Secrets Manager**: Cloud-native secrets
-- **Azure Key Vault**: Microsoft ecosystem integration
-- **CyberArk**: Enterprise privileged access
+## 10. Conclusion
 
-#### CI/CD Integrations
-- **GitHub Actions**: Native workflow integration
-- **Jenkins**: Enterprise CI/CD pipelines
-- **GitLab CI**: Multi-platform support
-- **Azure DevOps**: Microsoft ecosystem
+This specification outlines a focused, personal-use tool for bulk GitHub Copilot agent configuration. The design prioritizes:
 
-#### Monitoring Systems
-- **Datadog**: Application performance monitoring
-- **New Relic**: Full-stack observability
-- **Splunk**: Enterprise logging and analytics
-- **Prometheus/Grafana**: Open-source monitoring
+- **Simplicity**: Easy setup and configuration for individual developers
+- **Safety**: Conservative defaults and comprehensive validation
+- **Flexibility**: Multiple configuration strategies and merge options
+- **Reliability**: Robust error handling and recovery mechanisms
 
-### 11.3 API Evolution Strategy
+### Implementation Timeline
 
-```typescript
-interface APIVersioning {
-  currentVersion: "v1";
-  supportedVersions: ["v1"];
-  deprecationPolicy: {
-    warningPeriod: "6_months";
-    supportPeriod: "12_months";
-    migrationGuide: string;
-  };
-}
-```
+- **Week 1-2**: Core configuration parsing and repository discovery
+- **Week 3-4**: Browser automation and MCP configuration
+- **Week 5-6**: Error handling, resume/retry functionality
+- **Week 7-8**: Documentation, testing, and polish
 
-## 12. Conclusion
-
-This specification provides a comprehensive technical foundation for implementing a secure, scalable, and maintainable bulk GitHub Copilot agent configuration tool. The hybrid approach combining GitHub CLI and browser automation addresses the current limitations while providing a path for future enhancements as GitHub's API capabilities expand.
-
-The modular architecture ensures that individual components can be developed, tested, and deployed independently, reducing risk and enabling iterative delivery. The emphasis on security, audit capabilities, and compliance features makes this tool suitable for enterprise environments with strict governance requirements.
-
-### Next Steps
-
-1. **Stakeholder Review**: Present specification to security, compliance, and engineering teams
-2. **Proof of Concept**: Develop minimal viable implementation for 5-10 repositories
-3. **Security Assessment**: Conduct threat modeling and security review
-4. **Implementation Planning**: Create detailed project timeline and resource allocation
-5. **Pilot Deployment**: Test with production-representative environment
+The tool addresses a real need for personal GitHub users who want to efficiently manage MCP configurations across multiple repositories without manual, repetitive configuration work.
 
 ---
 
 **Document Version**: 1.0  
 **Last Updated**: 2024-01-15  
-**Review Cycle**: Quarterly  
-**Next Review Date**: 2024-04-15
+**Focus**: Personal GitHub account automation  
+**Next Review**: After Phase 1 implementation

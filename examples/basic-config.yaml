@@ -1,66 +1,20 @@
-# Basic Configuration Example
-# This configuration demonstrates the minimum required settings for
-# bulk GitHub Copilot agent configuration
+# Basic Repository List Example
+# This file specifies which repositories to configure
 
-# Target repositories to configure
+# Option 1: Specify individual repositories
 repositories:
-  - "myorg/web-app"
-  - "myorg/api-service"
-  - "myorg/mobile-app"
-
-# MCP (Model Context Protocol) server configurations
-mcp_servers:
-  # GitHub MCP server for repository access
-  github:
-    enabled: true
-    config:
-      token_source: "env:GITHUB_TOKEN"
-      repositories: ["*"]  # Allow access to all repositories
-      
-  # Playwright MCP server for browser automation
-  playwright:
-    enabled: true
-    config:
-      headless: true
-      timeout: 30000
-
-# Repository-level secrets to configure
-secrets:
-  repository_level:
-    API_KEY: "{{ env.API_KEY }}"
-    DATABASE_URL: "{{ env.DATABASE_URL }}"
-    REDIS_URL: "{{ env.REDIS_URL }}"
-
-# Repository variables (non-secret configuration)
-variables:
-  BUILD_ENVIRONMENT: "production"
-  LOG_LEVEL: "info"
-  NODE_ENV: "production"
-
-# Basic security configuration
-security:
-  # Branch protection for main branch
-  branch_protection:
-    main:
-      require_pr_reviews: true
-      required_approving_review_count: 1
-      dismiss_stale_reviews: true
-      require_code_owner_reviews: false
-      require_status_checks: true
-      required_status_checks:
-        - "ci/build"
-        - "ci/test"
+  - "myusername/web-app"
+  - "myusername/api-service" 
+  - "myusername/mobile-app"
+  - "myusername/blog-site"
 
 # Execution options
 options:
-  # Run in dry-run mode to preview changes
-  dry_run: false
+  # Skip repositories that already have MCP configuration
+  skip_existing: true
   
   # Number of repositories to process in parallel
   concurrency: 3
   
   # Enable detailed logging
   verbose: true
-  
-  # Continue processing even if some repositories fail
-  continue_on_error: true

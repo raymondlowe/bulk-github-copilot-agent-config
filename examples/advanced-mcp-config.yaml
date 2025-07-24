@@ -1,0 +1,50 @@
+# Advanced MCP Configuration Example
+# This configuration includes multiple MCP servers for various development tasks
+
+# GitHub integration for repository operations
+github:
+  enabled: true
+  config:
+    token_source: "env:GITHUB_TOKEN"
+    repositories: ["*"]
+    include_issues: true
+    include_pull_requests: true
+
+# Browser automation for testing and web scraping
+playwright:
+  enabled: true
+  config:
+    headless: true
+    timeout: 30000
+    screenshot_path: "/tmp/screenshots"
+
+# SQLite database access for local development
+sqlite:
+  enabled: true
+  config:
+    databases:
+      - "/workspace/app.db"
+      - "/workspace/test.db"
+
+# File system access with specific permissions
+filesystem:
+  enabled: true
+  config:
+    root_path: "/workspace"
+    readonly: false
+    allowed_extensions: [".js", ".ts", ".py", ".md", ".json", ".yaml"]
+
+# Custom API server (example)
+custom_api:
+  enabled: true
+  config:
+    endpoint: "https://api.example.com"
+    auth_token: "env:CUSTOM_API_TOKEN"
+    rate_limit: 100
+
+# Memory-based context for conversations
+memory:
+  enabled: true
+  config:
+    max_items: 1000
+    persist_across_sessions: true

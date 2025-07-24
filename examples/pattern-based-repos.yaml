@@ -1,0 +1,49 @@
+# Pattern-Based Repository Selection Example
+# This configuration uses patterns and filters to select repositories
+
+# Use pattern matching to select repositories
+repositories:
+  # Pattern-based selection
+  patterns:
+    - "myusername/*-service"     # All repositories ending with -service
+    - "myusername/app-*"         # All repositories starting with app-
+    - "myusername/*-api"         # All API repositories
+    - "myusername/tool-*"        # All tool repositories
+
+# Additional filters to refine selection
+filters:
+  # Only include repositories with specific topics
+  topics:
+    - "microservice"
+    - "api"
+    - "automation"
+    - "copilot-ready"
+  
+  # Exclude specific repositories even if they match patterns
+  exclude:
+    - "myusername/old-service"
+    - "myusername/deprecated-api"
+    - "myusername/template-service"
+  
+  # Only include repositories you own
+  owner_only: true
+  
+  # Only include repositories that have been updated recently
+  updated_since: "2024-01-01"
+
+# Processing options
+options:
+  # Merge new MCP configurations with existing ones
+  merge: true
+  
+  # Overwrite existing MCP servers with same names
+  overwrite_existing: true
+  
+  # Process repositories in parallel for speed
+  concurrency: 5
+  
+  # Continue processing even if some repositories fail
+  continue_on_error: true
+  
+  # Enable detailed logging
+  verbose: true
