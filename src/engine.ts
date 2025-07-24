@@ -176,20 +176,22 @@ export class ConfigurationEngine {
     // Process repositories in batches based on concurrency setting
     for (let i = 0; i < repositories.length; i += concurrency) {
       const batch = repositories.slice(i, i + concurrency);
-      const batchPromises = batch.map(repo => this.processRepository(repo, mcpConfig, secretsConfig, mergeStrategy));
+      const batchPromises = batch.map(repo => ({ repo, promise: this.processRepository(repo, mcpConfig, secretsConfig, mergeStrategy) }));
       
-      const batchResults = await Promise.allSettled(batchPromises);
+      const batchResults = await Promise.allSettled(batchPromises.map(item => item.promise));
       
-      for (const result of batchResults) {
+      for (let j = 0; j < batchResults.length; j++) {
+        const result = batchResults[j];
+        const repo = batch[j];
         processed++;
         this.spinner.text = `Processing repositories (${processed}/${total})...`;
         
         if (result.status === 'fulfilled') {
           results.push(result.value);
         } else {
-          Logger.error(`Repository processing failed: ${result.reason}`);
+          Logger.error(`Repository processing failed for ${repo.fullName}: ${result.reason}`);
           results.push({
-            repository: 'unknown',
+            repository: repo.fullName, // Use the actual repository name
             success: false,
             changes: {},
             error: result.reason.toString(),

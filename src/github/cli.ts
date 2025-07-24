@@ -56,7 +56,7 @@ export class GitHubCLI {
         if (filters.patterns && filters.patterns.length > 0) {
           filteredRepos = filteredRepos.filter((repo: Repository) =>
             filters.patterns!.some(pattern => {
-              const regex = new RegExp(pattern.replace('*', '.*'));
+              const regex = new RegExp(pattern.replace(/\*/g, '.*'));
               return regex.test(repo.fullName);
             })
           );

@@ -212,7 +212,11 @@ program
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (reason, promise) => {
   console.error(chalk.red('❌ Unhandled promise rejection:'), reason);
-  Logger.error('Unhandled promise rejection', { reason, promise });
+  Logger.error('Unhandled promise rejection', { 
+    reason: reason?.toString() || 'unknown', 
+    stack: reason instanceof Error ? reason.stack : undefined,
+    promise 
+  });
   process.exit(1);
 });
 

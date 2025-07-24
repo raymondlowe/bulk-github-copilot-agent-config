@@ -95,9 +95,9 @@ export class BrowserAutomator {
           try {
             return JSON.parse(configText) as MCPConfig;
           } catch {
-            // If it's not JSON, treat it as YAML-like configuration
-            Logger.warn(`MCP config for ${repositoryName} is not valid JSON, treating as raw text`);
-            return null;
+            // If it's not JSON, this indicates an unexpected configuration format
+            Logger.warn(`MCP config for ${repositoryName} is not valid JSON`);
+            throw new Error(`MCP config for ${repositoryName} is not valid JSON`);
           }
         }
       }

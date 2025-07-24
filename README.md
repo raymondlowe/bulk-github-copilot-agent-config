@@ -331,6 +331,19 @@ The tool is built with a modular TypeScript architecture:
 - **Logging**: Winston for structured logging
 - **UI**: Chalk and Ora for colorful CLI output with progress indicators
 
+#### Why Playwright over Puppeteer?
+
+We chose **Playwright** over Puppeteer for several key reasons:
+
+- **Better Cross-Browser Support**: Playwright supports Chromium, Firefox, and Safari out of the box, providing more flexibility for future requirements
+- **Improved Reliability**: Playwright has better handling of modern web applications with features like auto-waiting for elements and improved network handling
+- **Active Development**: Playwright is actively maintained by Microsoft with frequent updates and improvements
+- **Enhanced Developer Experience**: Better debugging tools, more comprehensive API, and improved error messages
+- **Automatic Browser Management**: Playwright automatically downloads and manages browser binaries, reducing setup complexity
+- **Better CI/CD Integration**: More reliable in containerized and headless environments common in automation scenarios
+
+While Puppeteer is excellent for Chrome/Chromium-specific use cases, Playwright's broader compatibility and enhanced reliability make it the better choice for a tool that needs to work consistently across different environments and potentially support multiple browsers in the future.
+
 ### Development
 
 ```bash

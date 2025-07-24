@@ -1,6 +1,7 @@
 import * as yaml from 'js-yaml';
 import * as fs from 'fs-extra';
 import { RepoConfig, MCPConfig, SecretsConfig } from '../types';
+import { Logger } from '../utils/logger';
 
 export class ConfigParser {
   static async parseRepoConfig(filePath: string): Promise<RepoConfig> {
@@ -92,7 +93,8 @@ export class ConfigParser {
     return value.replace(/\{\{\s*env\.(\w+)\s*\}\}/g, (_, varName) => {
       const envValue = process.env[varName];
       if (envValue === undefined) {
-        throw new Error(`Environment variable ${varName} is not set`);
+        Logger.warn(`Environment variable ${varName} is not set, using empty string as default`);
+        return ''; // Use empty string as default value
       }
       return envValue;
     });
