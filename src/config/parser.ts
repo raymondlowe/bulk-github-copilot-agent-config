@@ -19,31 +19,19 @@ export class ConfigParser {
   static async parseMCPConfig(filePath: string): Promise<MCPConfig> {
     try {
       const content = await fs.readFile(filePath, 'utf8');
-      let config: MCPConfig;
       
-      // Determine format by file extension or content
-      const isJsonFile = filePath.toLowerCase().endsWith('.json');
-      const isYamlFile = filePath.toLowerCase().endsWith('.yaml') || filePath.toLowerCase().endsWith('.yml');
-      
-      if (isJsonFile) {
-        // Parse as JSON
-        config = JSON.parse(content) as MCPConfig;
-      } else if (isYamlFile) {
-        // Parse as YAML
-        config = yaml.load(content) as MCPConfig;
-      } else {
-        // Auto-detect format - try JSON first since it's more common for MCP configs
-        try {
-          config = JSON.parse(content) as MCPConfig;
-        } catch {
-          // Fall back to YAML
-          config = yaml.load(content) as MCPConfig;
-        }
+      // Only support JSON format for MCP config files
+      if (!filePath.toLowerCase().endsWith('.json')) {
+        throw new Error('MCP config files must be in JSON format. Please use a .json file extension.');
       }
       
+      const config = JSON.parse(content) as MCPConfig;
       this.validateMCPConfig(config);
       return config;
     } catch (error) {
+      if (error instanceof SyntaxError) {
+        throw new Error(`Failed to parse MCP config: Invalid JSON format. ${error.message}`);
+      }
       throw new Error(`Failed to parse MCP config: ${error}`);
     }
   }

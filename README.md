@@ -88,30 +88,43 @@ options:
   verbose: true        # Enable detailed logging
 ```
 
-2. **Create an MCP configuration file** (`mcp-config.yaml`):
+2. **Create an MCP configuration file** (`mcp-config.json`):
 
-```yaml
-# This is the content that will be inserted into the MCP configuration field
-# in GitHub Copilot Agent settings
-
-github:
-  enabled: true
-  config:
-    token_source: "env:GITHUB_TOKEN"
-    repositories: ["*"]  # Allow access to all repositories
-    
-playwright:
-  enabled: true
-  config:
-    headless: true
-    timeout: 30000
-
-# File system access for local development
-filesystem:
-  enabled: true
-  config:
-    root_path: "/workspace"
-    readonly: false
+```json
+{
+  "mcpServers": {
+    "github-mcp": {
+      "type": "http",
+      "url": "https://api.github.com/mcp",
+      "headers": {
+        "Authorization": "Bearer {{ env.GITHUB_TOKEN }}"
+      },
+      "tools": [
+        "create_repository",
+        "list_repositories",
+        "get_repository",
+        "create_issue",
+        "list_issues"
+      ]
+    },
+    "filesystem-mcp": {
+      "type": "local",
+      "command": "npx",
+      "args": [
+        "filesystem-mcp"
+      ],
+      "env": {
+        "ROOT_PATH": "/workspace"
+      },
+      "tools": [
+        "read_file",
+        "write_file",
+        "list_directory",
+        "create_directory"
+      ]
+    }
+  }
+}
 ```
 
 3. **Optional: Configure repository secrets/variables** (`secrets.yaml`):
@@ -132,7 +145,7 @@ variables:
 
 ```bash
 # Validate configuration files first
-npm run configure -- validate --repos repos.yaml --mcp-config mcp-config.yaml --secrets secrets.yaml
+npm run configure -- validate --repos repos.yaml --mcp-config mcp-config.json --secrets secrets.yaml
 
 # Check GitHub authentication
 npm run configure -- check-auth
@@ -141,13 +154,13 @@ npm run configure -- check-auth
 npm run configure -- list-repos --repos repos.yaml
 
 # Dry run to preview changes
-npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml --dry-run
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.json --dry-run
 
 # Apply MCP configuration only
-npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.json
 
 # Apply MCP config and secrets/variables
-npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml --secrets secrets.yaml
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.json --secrets secrets.yaml
 ```
 
 ## 📋 Configuration Options
@@ -176,16 +189,16 @@ Control how existing MCP configurations are handled:
 
 ```bash
 # Don't overwrite existing MCP configs (skip repos that already have MCP config)
-npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml --skip-existing
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.json --skip-existing
 
 # Merge new MCP servers with existing ones (keep existing, add new)
-npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml --merge
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.json --merge
 
 # Merge with overwrite option (replace existing servers if they have the same name)
-npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml --merge --overwrite-existing
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.json --merge --overwrite-existing
 
 # Force overwrite all MCP configuration (replace entirely)
-npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.yaml --force-overwrite
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.json --force-overwrite
 ```
 
 ### Command Line Options
@@ -242,34 +255,54 @@ options:
 
 ### MCP Server Configuration
 
-Define the MCP servers to be configured in your repositories:
+Define the MCP servers to be configured in your repositories using JSON format:
 
-```yaml
-# mcp-config.yaml - This content goes into the GitHub Copilot Agent MCP config field
-
-github:
-  enabled: true
-  config:
-    token_source: "env:GITHUB_TOKEN"
-    repositories: ["*"]  # Access all repos, or specify specific ones
-  
-playwright:
-  enabled: true
-  config:
-    headless: true
-    timeout: 30000
-  
-custom_api_server:
-  enabled: true
-  config:
-    endpoint: "https://api.example.com"
-    auth_header: "Bearer {{ secrets.CUSTOM_API_KEY }}"
-    
-filesystem:
-  enabled: true
-  config:
-    root_path: "/workspace"
-    readonly: false
+```json
+{
+  "mcpServers": {
+    "github-mcp": {
+      "type": "http",
+      "url": "https://api.github.com/mcp",
+      "headers": {
+        "Authorization": "Bearer {{ env.GITHUB_TOKEN }}"
+      },
+      "tools": [
+        "create_repository",
+        "list_repositories",
+        "get_repository",
+        "create_issue",
+        "list_issues"
+      ]
+    },
+    "filesystem-mcp": {
+      "type": "local",
+      "command": "npx",
+      "args": [
+        "filesystem-mcp"
+      ],
+      "env": {
+        "ROOT_PATH": "/workspace"
+      },
+      "tools": [
+        "read_file",
+        "write_file",
+        "list_directory",
+        "create_directory"
+      ]
+    },
+    "custom-api-server": {
+      "type": "http",
+      "url": "https://api.example.com/mcp",
+      "headers": {
+        "Authorization": "Bearer {{ env.CUSTOM_API_KEY }}"
+      },
+      "tools": [
+        "custom_tool_1",
+        "custom_tool_2"
+      ]
+    }
+  }
+}
 ```
 
 ### Repository Secrets and Variables
@@ -349,7 +382,7 @@ While Puppeteer is excellent for Chrome/Chromium-specific use cases, Playwright'
 
 ```bash
 # Development mode with TypeScript compilation
-npm run dev -- configure --repos examples/basic-repos.yaml --mcp-config examples/basic-mcp-config.yaml --dry-run
+npm run dev -- configure --repos examples/basic-repos.yaml --mcp-config examples/basic-mcp-config.json --dry-run
 
 # Build TypeScript to JavaScript
 npm run build
@@ -453,7 +486,7 @@ npm run build
 npm run dev -- configure --help
 
 # Run validation tests
-npm run configure -- validate --repos examples/basic-repos.yaml --mcp-config examples/basic-mcp-config.yaml
+npm run configure -- validate --repos examples/basic-repos.yaml --mcp-config examples/basic-mcp-config.json
 ```
 
 ### Code Structure
