@@ -1,0 +1,95 @@
+{
+  "mcpServers": {
+    "ga4-gsc-mcp": {
+      "type": "http",
+      "url": "https://mcp2.wlmedia.com/mcp?key={{ env.GA4_GSC_API_KEY }}",
+      "headers": {
+        "Authorization": "Bearer {{ env.GA4_GSC_AUTH_TOKEN }}"
+      },
+      "tools": [
+        "query_ga4_data",
+        "query_gsc_data", 
+        "query_unified_data",
+        "list_ga4_properties",
+        "list_gsc_domains",
+        "page_performance_ga4",
+        "traffic_sources_ga4",
+        "audience_analysis_ga4",
+        "revenue_analysis_ga4",
+        "page_performance_gsc",
+        "query_analysis_gsc",
+        "page_query_opportunities_gsc"
+      ]
+    },
+    "keywords-everywhere-mcp": {
+      "type": "local",
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.keywordseverywhere.com/mcp",
+        "--header",
+        "Authorization:Bearer {{ env.KEYWORDS_EVERYWHERE_TOKEN }}"
+      ],
+      "env": {
+        "KEYWORDS_EVERYWHERE_AUTH_HEADER": "Bearer {{ env.KEYWORDS_EVERYWHERE_TOKEN }}"
+      },
+      "tools": [
+        "*"
+      ]
+    },
+    "tavily-mcp": {
+      "type": "local",
+      "command": "bash",
+      "args": [
+        "-c",
+        "export TAVILY_API_KEY={{ env.TAVILY_API_KEY }} && npx -y tavily-mcp@latest"
+      ],
+      "env": {
+        "TAVILY_API_KEY": "{{ env.TAVILY_API_KEY }}"
+      },
+      "tools": [
+        "tavily-search",
+        "tavily-extract"
+      ]
+    },
+    "playwright-mcp": {
+      "type": "local",
+      "command": "npx",
+      "args": [
+        "playwright-mcp"
+      ],
+      "env": {
+        "PLAYWRIGHT_HEADLESS": "true"
+      },
+      "tools": [
+        "navigate",
+        "screenshot",
+        "click",
+        "type",
+        "scroll",
+        "wait_for_element"
+      ]
+    },
+    "filesystem-mcp": {
+      "type": "local", 
+      "command": "npx",
+      "args": [
+        "filesystem-mcp",
+        "--root",
+        "/workspace"
+      ],
+      "env": {
+        "ROOT_PATH": "/workspace",
+        "READONLY": "false"
+      },
+      "tools": [
+        "read_file",
+        "write_file",
+        "list_directory",
+        "create_directory",
+        "delete_file",
+        "search_files"
+      ]
+    }
+  }
+}

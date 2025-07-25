@@ -18,7 +18,7 @@ program
   .command('configure')
   .description('Configure GitHub Copilot agents across repositories')
   .requiredOption('--repos <file>', 'Repository configuration file (repos.yaml)')
-  .requiredOption('--mcp-config <file>', 'MCP configuration file (mcp-config.yaml)')
+  .requiredOption('--mcp-config <file>', 'MCP configuration file (.json or .yaml)')
   .option('--secrets <file>', 'Optional secrets configuration file (secrets.yaml)')
   .option('--dry-run', 'Preview changes without applying them', false)
   .option('--skip-existing', 'Skip repositories with existing MCP configuration', false)
@@ -101,7 +101,7 @@ program
   .command('validate')
   .description('Validate configuration files without applying changes')
   .requiredOption('--repos <file>', 'Repository configuration file (repos.yaml)')
-  .requiredOption('--mcp-config <file>', 'MCP configuration file (mcp-config.yaml)')
+  .requiredOption('--mcp-config <file>', 'MCP configuration file (.json or .yaml)')
   .option('--secrets <file>', 'Optional secrets configuration file (secrets.yaml)')
   .action(async (options) => {
     try {

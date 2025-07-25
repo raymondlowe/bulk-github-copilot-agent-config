@@ -138,8 +138,8 @@ export class ConfigurationEngine {
     });
 
     console.log(chalk.white('\nMCP servers to configure:'));
-    Object.entries(mcpConfig).forEach(([name, config]) => {
-      console.log(`  • ${name} (enabled: ${config.enabled})`);
+    Object.entries(mcpConfig.mcpServers).forEach(([name, config]) => {
+      console.log(`  • ${name} (type: ${config.type})`);
     });
 
     if (secretsConfig?.secrets) {

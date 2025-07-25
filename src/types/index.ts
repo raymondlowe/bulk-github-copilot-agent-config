@@ -20,10 +20,22 @@ export interface ProcessingOptions {
 }
 
 export interface MCPConfig {
-  [serverName: string]: {
-    enabled: boolean;
-    config: Record<string, any>;
+  mcpServers: {
+    [serverName: string]: MCPServerConfig;
   };
+}
+
+export interface MCPServerConfig {
+  type: 'http' | 'local';
+  // HTTP server configuration
+  url?: string;
+  headers?: Record<string, string>;
+  // Local server configuration  
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  // Common properties
+  tools: string[];
 }
 
 export interface SecretsConfig {

@@ -19,7 +19,27 @@ export class ConfigParser {
   static async parseMCPConfig(filePath: string): Promise<MCPConfig> {
     try {
       const content = await fs.readFile(filePath, 'utf8');
-      const config = yaml.load(content) as MCPConfig;
+      let config: MCPConfig;
+      
+      // Determine format by file extension or content
+      const isJsonFile = filePath.toLowerCase().endsWith('.json');
+      const isYamlFile = filePath.toLowerCase().endsWith('.yaml') || filePath.toLowerCase().endsWith('.yml');
+      
+      if (isJsonFile) {
+        // Parse as JSON
+        config = JSON.parse(content) as MCPConfig;
+      } else if (isYamlFile) {
+        // Parse as YAML
+        config = yaml.load(content) as MCPConfig;
+      } else {
+        // Auto-detect format - try JSON first since it's more common for MCP configs
+        try {
+          config = JSON.parse(content) as MCPConfig;
+        } catch {
+          // Fall back to YAML
+          config = yaml.load(content) as MCPConfig;
+        }
+      }
       
       this.validateMCPConfig(config);
       return config;
@@ -63,17 +83,33 @@ export class ConfigParser {
       throw new Error('MCP config must be an object');
     }
 
-    for (const [serverName, serverConfig] of Object.entries(config)) {
+    if (!config.mcpServers || typeof config.mcpServers !== 'object') {
+      throw new Error('MCP config must have an "mcpServers" object property');
+    }
+
+    for (const [serverName, serverConfig] of Object.entries(config.mcpServers)) {
       if (!serverConfig || typeof serverConfig !== 'object') {
         throw new Error(`MCP server "${serverName}" config must be an object`);
       }
 
-      if (typeof serverConfig.enabled !== 'boolean') {
-        throw new Error(`MCP server "${serverName}" must have an "enabled" boolean property`);
+      if (!serverConfig.type || !['http', 'local'].includes(serverConfig.type)) {
+        throw new Error(`MCP server "${serverName}" must have a "type" property set to "http" or "local"`);
       }
 
-      if (!serverConfig.config || typeof serverConfig.config !== 'object') {
-        throw new Error(`MCP server "${serverName}" must have a "config" object property`);
+      if (!Array.isArray(serverConfig.tools)) {
+        throw new Error(`MCP server "${serverName}" must have a "tools" array property`);
+      }
+
+      if (serverConfig.type === 'http') {
+        if (!serverConfig.url || typeof serverConfig.url !== 'string') {
+          throw new Error(`HTTP MCP server "${serverName}" must have a "url" string property`);
+        }
+      }
+
+      if (serverConfig.type === 'local') {
+        if (!serverConfig.command || typeof serverConfig.command !== 'string') {
+          throw new Error(`Local MCP server "${serverName}" must have a "command" string property`);
+        }
       }
     }
   }

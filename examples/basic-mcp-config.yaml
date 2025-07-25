@@ -1,23 +1,28 @@
-# Basic MCP Configuration Example
-# This content will be inserted into the GitHub Copilot Agent MCP configuration field
+# Basic MCP Configuration Example (YAML format)
+# This matches the actual GitHub Copilot Agent MCP configuration format
 
-# GitHub MCP server for repository access
-github:
-  enabled: true
-  config:
-    token_source: "env:GITHUB_TOKEN"
-    repositories: ["*"]  # Allow access to all repositories
+mcpServers:
+  github-mcp:
+    type: http
+    url: "https://api.github.com/mcp"
+    headers:
+      Authorization: "Bearer {{ env.GITHUB_TOKEN }}"
+    tools:
+      - create_repository
+      - list_repositories
+      - get_repository
+      - create_issue
+      - list_issues
       
-# Playwright MCP server for browser automation
-playwright:
-  enabled: true
-  config:
-    headless: true
-    timeout: 30000
-
-# File system access for local development
-filesystem:
-  enabled: true
-  config:
-    root_path: "/workspace"
-    readonly: false
+  filesystem-mcp:
+    type: local
+    command: npx
+    args:
+      - filesystem-mcp
+    env:
+      ROOT_PATH: "/workspace"
+    tools:
+      - read_file
+      - write_file
+      - list_directory
+      - create_directory
