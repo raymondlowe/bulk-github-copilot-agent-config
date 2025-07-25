@@ -19,7 +19,27 @@ export class ConfigParser {
   static async parseMCPConfig(filePath: string): Promise<MCPConfig> {
     try {
       const content = await fs.readFile(filePath, 'utf8');
-      const config = yaml.load(content) as MCPConfig;
+      let config: MCPConfig;
+      
+      // Determine format by file extension or content
+      const isJsonFile = filePath.toLowerCase().endsWith('.json');
+      const isYamlFile = filePath.toLowerCase().endsWith('.yaml') || filePath.toLowerCase().endsWith('.yml');
+      
+      if (isJsonFile) {
+        // Parse as JSON
+        config = JSON.parse(content) as MCPConfig;
+      } else if (isYamlFile) {
+        // Parse as YAML
+        config = yaml.load(content) as MCPConfig;
+      } else {
+        // Auto-detect format - try JSON first since it's more common for MCP configs
+        try {
+          config = JSON.parse(content) as MCPConfig;
+        } catch {
+          // Fall back to YAML
+          config = yaml.load(content) as MCPConfig;
+        }
+      }
       
       this.validateMCPConfig(config);
       return config;
