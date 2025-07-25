@@ -26,6 +26,7 @@ Managing GitHub Copilot agent MCP (Model Context Protocol) server settings acros
 - **GitHub CLI** (`gh`) installed and authenticated with your personal account
 - **Node.js** 18+ for the TypeScript/JavaScript runtime
 - **Repository admin access** for target repositories (your own repos or repos you collaborate on)
+- **Playwright** install `npx playwright install`
 - **Chromium browser** for browser automation (automatically installed via Playwright)
 
 **Note**: In some restricted environments (like CI/CD systems), browser automation may not work. In these cases, you can still use the tool for:
