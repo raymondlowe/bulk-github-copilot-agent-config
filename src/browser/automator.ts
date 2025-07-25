@@ -104,18 +104,19 @@ export class BrowserAutomator {
         throw new Error(`No access to repository settings for ${repositoryName}`);
       }
 
-      // Look for the MCP configuration textarea or field
-      // Note: This is a best-guess implementation since GitHub's Copilot settings page structure may vary
-      const mcpConfigElement = await page.locator('textarea[name*="mcp"], textarea[id*="mcp"], textarea[placeholder*="MCP"]').first();
+      // Look for the MCP configuration field - GitHub uses a contenteditable div with cm-content class
+      const mcpConfigElement = await page.locator('.cm-content[contenteditable="true"]').first();
       
       if (await mcpConfigElement.isVisible().catch(() => false)) {
-        const configText = await mcpConfigElement.inputValue();
-        if (configText.trim()) {
+        const configText = await mcpConfigElement.textContent();
+        if (configText && configText.trim()) {
           try {
-            return JSON.parse(configText) as MCPConfig;
+            // Extract JSON from the text content, handling potential whitespace
+            const cleanedText = configText.trim();
+            return JSON.parse(cleanedText) as MCPConfig;
           } catch {
             // If it's not JSON, this indicates an unexpected configuration format
-            Logger.warn(`MCP config for ${repositoryName} is not valid JSON`);
+            Logger.warn(`MCP config for ${repositoryName} is not valid JSON: ${configText}`);
             throw new Error(`MCP config for ${repositoryName} is not valid JSON`);
           }
         }
@@ -152,25 +153,27 @@ export class BrowserAutomator {
         throw new Error(`No access to repository settings for ${repositoryName}`);
       }
 
-      // Look for the MCP configuration textarea or field
-      const mcpConfigElement = await page.locator('textarea[name*="mcp"], textarea[id*="mcp"], textarea[placeholder*="MCP"]').first();
+      // Look for the MCP configuration field - GitHub uses a contenteditable div with cm-content class
+      const mcpConfigElement = await page.locator('.cm-content[contenteditable="true"]').first();
       
       if (await mcpConfigElement.isVisible().catch(() => false)) {
         // Clear existing content and input new configuration
-        await mcpConfigElement.fill('');
-        await mcpConfigElement.fill(JSON.stringify(newConfig, null, 2));
+        // For contenteditable divs, we need to select all and replace
+        await mcpConfigElement.click();
+        await page.keyboard.press('Control+a');
+        await page.keyboard.type(JSON.stringify(newConfig, null, 2));
         
-        // Look for and click save button
-        const saveButton = await page.locator('button:has-text("Save"), input[type="submit"][value*="Save"], button[type="submit"]').first();
+        // Look for and click the specific MCP save button - be more specific to avoid false positives
+        const saveButton = await page.locator('button:has-text("Save MCP configuration"), button.prc-Button-ButtonBase-c50BI:has-text("Save MCP configuration")').first();
         
         if (await saveButton.isVisible().catch(() => false)) {
           await saveButton.click();
           
           // Wait for save to complete
-          await page.waitForTimeout(2000);
+          await page.waitForTimeout(3000);
           
           // Check for success message or error
-          const errorElement = await page.locator('.flash-error, .error, [role="alert"]').first();
+          const errorElement = await page.locator('.flash-error, .error, [role="alert"], .alert-error').first();
           if (await errorElement.isVisible().catch(() => false)) {
             const errorText = await errorElement.textContent();
             throw new Error(`Failed to save MCP config: ${errorText}`);
