@@ -1,10 +1,12 @@
 import { Browser, BrowserContext, Page, chromium } from 'playwright';
 import { MCPConfig, MergeStrategy } from '../types';
 import { Logger } from '../utils/logger';
+import { GitHubCLI } from '../github/cli';
 
 export class BrowserAutomator {
   private browser: Browser | null = null;
   private context: BrowserContext | null = null;
+  private authToken: string | null = null;
 
   async initialize(): Promise<void> {
     try {
@@ -20,6 +22,16 @@ export class BrowserAutomator {
       Logger.info('Browser automation initialized');
     } catch (error) {
       throw new Error(`Failed to initialize browser: ${error}`);
+    }
+  }
+
+  private async setPageAuthentication(page: Page): Promise<void> {
+    if (this.authToken) {
+      await page.setExtraHTTPHeaders({
+        'Authorization': `token ${this.authToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'bulk-github-copilot-agent-config'
+      });
     }
   }
 
@@ -45,21 +57,27 @@ export class BrowserAutomator {
     }
 
     try {
+      // Get GitHub authentication token from CLI
+      this.authToken = await GitHubCLI.getAuthToken();
+      
       const page = await this.context.newPage();
+      await this.setPageAuthentication(page);
       
-      // Try to access GitHub and check if we're already authenticated
-      await page.goto('https://github.com/settings');
-      
-      // Wait a moment for potential redirects
-      await page.waitForTimeout(2000);
-      
-      const currentUrl = page.url();
-      if (currentUrl.includes('/login')) {
-        throw new Error('Not authenticated with GitHub. Please ensure GitHub CLI is authenticated and try again.');
+      // Try to authenticate by accessing a GitHub API endpoint first
+      const response = await page.goto('https://api.github.com/user');
+      if (response && response.status() === 200) {
+        Logger.info('GitHub API authentication successful');
+        
+        // Close the API test page
+        await page.close();
+        
+        // Test repository access by trying to access a settings page
+        // We'll rely on the authentication headers for subsequent requests
+        Logger.info('GitHub authentication verified - will use token-based authentication');
+      } else {
+        throw new Error(`GitHub API authentication failed with status: ${response?.status()}`);
       }
       
-      Logger.info('GitHub authentication verified via browser');
-      await page.close();
     } catch (error) {
       throw new Error(`GitHub authentication failed: ${error}`);
     }
@@ -71,6 +89,7 @@ export class BrowserAutomator {
     }
 
     const page = await this.context.newPage();
+    await this.setPageAuthentication(page);
     
     try {
       const url = `https://github.com/${repositoryName}/settings/copilot`;
@@ -118,6 +137,7 @@ export class BrowserAutomator {
     }
 
     const page = await this.context.newPage();
+    await this.setPageAuthentication(page);
     
     try {
       const url = `https://github.com/${repositoryName}/settings/copilot`;

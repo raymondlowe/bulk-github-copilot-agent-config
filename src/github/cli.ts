@@ -15,6 +15,22 @@ export class GitHubCLI {
     }
   }
 
+  static async getAuthToken(): Promise<string> {
+    await this.checkAuthentication();
+    
+    try {
+      const { stdout } = await execAsync('gh auth token');
+      const token = stdout.trim();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+      Logger.info('GitHub CLI authentication token retrieved');
+      return token;
+    } catch (error) {
+      throw new Error(`Failed to retrieve GitHub authentication token: ${error}`);
+    }
+  }
+
   static async listUserRepositories(filters?: RepoFilters): Promise<Repository[]> {
     await this.checkAuthentication();
     
