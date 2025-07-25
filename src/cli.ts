@@ -27,6 +27,8 @@ program
   .option('--force-overwrite', 'Replace entire MCP configuration', false)
   .option('--concurrency <number>', 'Number of repositories to process in parallel', '3')
   .option('--verbose', 'Enable verbose logging', false)
+  .option('--debug', 'Enable debug mode with visible browser and extended logging', false)
+  .option('--api-only', 'Use only GitHub API (no browser automation fallback)', false)
   .option('--resume', 'Resume from last failed repository', false)
   .option('--retry-failed', 'Retry only failed repositories from previous run', false)
   .action(async (options) => {
@@ -79,6 +81,8 @@ program
         forceOverwrite: options.forceOverwrite,
         concurrency,
         verbose: options.verbose,
+        debug: options.debug,
+        apiOnly: options.apiOnly,
         resume: options.resume,
         retryFailed: options.retryFailed
       };

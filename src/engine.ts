@@ -1,5 +1,6 @@
 import { ConfigParser } from './config/parser';
 import { GitHubCLI } from './github/cli';
+import { GitHubAPIAutomator } from './github/api';
 import { BrowserAutomator } from './browser/automator';
 import { Logger } from './utils/logger';
 import {
@@ -16,11 +17,14 @@ import chalk from 'chalk';
 
 export class ConfigurationEngine {
   private githubCLI: GitHubCLI;
+  private apiAutomator: GitHubAPIAutomator;
   private browserAutomator: BrowserAutomator;
   private spinner: any;
 
   constructor() {
     this.githubCLI = new GitHubCLI();
+    this.apiAutomator = new GitHubAPIAutomator();
+    // BrowserAutomator will be initialized with debug mode in configure method
     this.browserAutomator = new BrowserAutomator();
   }
 
@@ -68,9 +72,15 @@ export class ConfigurationEngine {
         return this.createSummary([], startTime);
       }
 
-      // Initialize browser automation
-      await this.browserAutomator.initialize();
-      await this.browserAutomator.authenticateWithGitHub();
+      // Initialize API automator first (faster and less resource intensive)
+      await this.apiAutomator.initialize();
+      
+      // Only initialize browser automation if not in API-only mode
+      if (!options.apiOnly) {
+        this.browserAutomator = new BrowserAutomator(options.debug);
+        await this.browserAutomator.initialize();
+        await this.browserAutomator.authenticateWithGitHub();
+      }
 
       // Process repositories
       const results = await this.processRepositories(
@@ -78,10 +88,12 @@ export class ConfigurationEngine {
         mcpConfig,
         secretsConfig,
         mergeStrategy,
-        options.concurrency
+        options.concurrency,
+        options.apiOnly
       );
 
       // Cleanup
+      await this.apiAutomator.cleanup();
       await this.browserAutomator.cleanup();
 
       // Generate summary
@@ -165,7 +177,8 @@ export class ConfigurationEngine {
     mcpConfig: MCPConfig,
     secretsConfig: SecretsConfig | undefined,
     mergeStrategy: MergeStrategy,
-    concurrency: number
+    concurrency: number,
+    apiOnly: boolean
   ): Promise<OperationResult[]> {
     const results: OperationResult[] = [];
     const total = repositories.length;
@@ -176,7 +189,7 @@ export class ConfigurationEngine {
     // Process repositories in batches based on concurrency setting
     for (let i = 0; i < repositories.length; i += concurrency) {
       const batch = repositories.slice(i, i + concurrency);
-      const batchPromises = batch.map(repo => ({ repo, promise: this.processRepository(repo, mcpConfig, secretsConfig, mergeStrategy) }));
+      const batchPromises = batch.map(repo => ({ repo, promise: this.processRepository(repo, mcpConfig, secretsConfig, mergeStrategy, apiOnly) }));
       
       const batchResults = await Promise.allSettled(batchPromises.map(item => item.promise));
       
@@ -209,7 +222,8 @@ export class ConfigurationEngine {
     repository: Repository,
     mcpConfig: MCPConfig,
     secretsConfig: SecretsConfig | undefined,
-    mergeStrategy: MergeStrategy
+    mergeStrategy: MergeStrategy,
+    apiOnly: boolean
   ): Promise<OperationResult> {
     const startTime = Date.now();
     const result: OperationResult = {
@@ -222,12 +236,51 @@ export class ConfigurationEngine {
     try {
       Logger.info(`Processing repository: ${repository.fullName}`);
 
-      // Configure MCP settings
-      const mcpResult = await this.browserAutomator.configureRepository(
-        repository.fullName,
-        mcpConfig,
-        mergeStrategy
-      );
+      // Configure MCP settings - try API first, fallback to browser automation
+      let mcpResult;
+      try {
+        Logger.info(`Attempting API-based MCP configuration for ${repository.fullName}`);
+        
+        // Try to read existing config via API
+        const existingConfig = await this.apiAutomator.readMCPConfig(repository.fullName);
+        
+        // Apply merge strategy
+        const finalConfig = this.apiAutomator.mergeMCPConfig(existingConfig, mcpConfig, mergeStrategy);
+        
+        // Skip update if configuration would be identical
+        if (existingConfig && JSON.stringify(existingConfig) === JSON.stringify(finalConfig)) {
+          Logger.info(`No changes needed for ${repository.fullName} (API)`);
+          mcpResult = {
+            before: existingConfig,
+            after: finalConfig,
+            strategy: mergeStrategy
+          };
+        } else {
+          // Try to update via API
+          await this.apiAutomator.updateMCPConfig(repository.fullName, finalConfig);
+          mcpResult = {
+            before: existingConfig,
+            after: finalConfig,
+            strategy: mergeStrategy
+          };
+          Logger.info(`Successfully configured MCP via API for ${repository.fullName}`);
+        }
+      } catch (apiError) {
+        Logger.warn(`API configuration failed for ${repository.fullName}: ${apiError}`);
+        
+        if (apiOnly) {
+          throw new Error(`API-only mode enabled but API configuration failed: ${apiError}`);
+        }
+        
+        Logger.info(`Falling back to browser automation for ${repository.fullName}`);
+        
+        // Fallback to browser automation
+        mcpResult = await this.browserAutomator.configureRepository(
+          repository.fullName,
+          mcpConfig,
+          mergeStrategy
+        );
+      }
       
       result.changes.mcpConfig = mcpResult;
 

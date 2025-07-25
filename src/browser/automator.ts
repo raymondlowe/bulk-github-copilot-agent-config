@@ -2,16 +2,23 @@ import { Browser, BrowserContext, Page, chromium } from 'playwright';
 import { MCPConfig, MergeStrategy } from '../types';
 import { Logger } from '../utils/logger';
 import { GitHubCLI } from '../github/cli';
+import * as fs from 'fs';
 
 export class BrowserAutomator {
   private browser: Browser | null = null;
   private context: BrowserContext | null = null;
   private authToken: string | null = null;
+  private debugMode: boolean = false;
+
+  constructor(debugMode: boolean = false) {
+    this.debugMode = debugMode;
+  }
 
   async initialize(): Promise<void> {
     try {
       this.browser = await chromium.launch({
-        headless: true,
+        headless: !this.debugMode,
+        slowMo: this.debugMode ? 1000 : 0,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
       });
       
@@ -92,11 +99,54 @@ export class BrowserAutomator {
     await this.setPageAuthentication(page);
     
     try {
-      const url = `https://github.com/${repositoryName}/settings/copilot`;
+      const url = `https://github.com/${repositoryName}/settings/copilot/coding_agent`;
+      Logger.info(`Navigating to: ${url}`);
       await page.goto(url, { waitUntil: 'networkidle' });
 
       // Wait for the page to load
       await page.waitForTimeout(2000);
+
+      if (this.debugMode) {
+        // Save screenshot for debugging
+        await page.screenshot({ path: `debug-${repositoryName.replace('/', '-')}-page.png`, fullPage: true });
+        
+        // Save page HTML for debugging
+        const html = await page.content();
+        fs.writeFileSync(`debug-${repositoryName.replace('/', '-')}-page.html`, html);
+        
+        // Log all form elements and potential config fields
+        const formElements = await page.locator('form, textarea, [contenteditable], .cm-content, .CodeMirror, input').all();
+        Logger.info(`Found ${formElements.length} form elements`);
+        
+        for (let i = 0; i < formElements.length; i++) {
+          const element = formElements[i];
+          try {
+            const tagName = await element.evaluate(el => el.tagName);
+            const className = await element.evaluate(el => el.className || '');
+            const id = await element.evaluate(el => el.id || '');
+            const text = await element.textContent();
+            Logger.info(`Element ${i}: ${tagName} class="${className}" id="${id}" text="${text?.substring(0, 100)}"`);
+          } catch (e) {
+            Logger.info(`Element ${i}: Failed to inspect - ${e}`);
+          }
+        }
+        
+        // Look for any elements that might contain "mcp" or "copilot"
+        const mcpElements = await page.locator('*').filter({ hasText: /mcp|copilot|configuration|agent/i }).all();
+        Logger.info(`Found ${mcpElements.length} elements mentioning MCP/Copilot/configuration/agent`);
+        
+        for (let i = 0; i < mcpElements.length && i < 20; i++) {
+          const element = mcpElements[i];
+          try {
+            const tagName = await element.evaluate(el => el.tagName);
+            const className = await element.evaluate(el => el.className || '');
+            const text = await element.textContent();
+            Logger.info(`MCP Element ${i}: ${tagName} class="${className}" text="${text?.substring(0, 200)}"`);
+          } catch (e) {
+            Logger.info(`MCP Element ${i}: Failed to inspect - ${e}`);
+          }
+        }
+      }
 
       // Check if we have access to the settings
       const accessDenied = await page.locator("text=You don't have permission").isVisible().catch(() => false);
@@ -104,11 +154,39 @@ export class BrowserAutomator {
         throw new Error(`No access to repository settings for ${repositoryName}`);
       }
 
-      // Look for the MCP configuration field - GitHub uses a contenteditable div with cm-content class
-      const mcpConfigElement = await page.locator('.cm-content[contenteditable="true"]').first();
+      // Look for the MCP configuration field - try multiple selectors
+      const selectors = [
+        '.cm-content[contenteditable="true"]',
+        '.CodeMirror-code',
+        'textarea[name*="mcp"]',
+        'textarea[id*="mcp"]',
+        '[data-testid*="mcp"]',
+        '.form-control[name*="config"]',
+        'textarea.form-control',
+        '[contenteditable="true"]'
+      ];
+
+      let mcpConfigElement = null;
+      let foundSelector = '';
       
-      if (await mcpConfigElement.isVisible().catch(() => false)) {
+      for (const selector of selectors) {
+        try {
+          const element = page.locator(selector).first();
+          if (await element.isVisible().catch(() => false)) {
+            mcpConfigElement = element;
+            foundSelector = selector;
+            Logger.info(`Found MCP config element with selector: ${selector}`);
+            break;
+          }
+        } catch (e) {
+          // Continue trying other selectors
+        }
+      }
+      
+      if (mcpConfigElement) {
         const configText = await mcpConfigElement.textContent();
+        Logger.info(`Found config text using selector ${foundSelector}: ${configText?.substring(0, 200)}`);
+        
         if (configText && configText.trim()) {
           try {
             // Extract JSON from the text content, handling potential whitespace
@@ -122,13 +200,20 @@ export class BrowserAutomator {
         }
       }
 
+      if (this.debugMode) {
+        Logger.info('Pausing for manual inspection - press any key in the browser to continue');
+        await page.waitForTimeout(30000); // Wait 30 seconds for manual inspection
+      }
+
       Logger.info(`No existing MCP configuration found for ${repositoryName}`);
       return null;
     } catch (error) {
       Logger.error(`Failed to read MCP config for ${repositoryName}: ${error}`);
       throw error;
     } finally {
-      await page.close();
+      if (!this.debugMode) {
+        await page.close();
+      }
     }
   }
 
@@ -141,11 +226,17 @@ export class BrowserAutomator {
     await this.setPageAuthentication(page);
     
     try {
-      const url = `https://github.com/${repositoryName}/settings/copilot`;
+      const url = `https://github.com/${repositoryName}/settings/copilot/coding_agent`;
+      Logger.info(`Navigating to: ${url}`);
       await page.goto(url, { waitUntil: 'networkidle' });
 
       // Wait for the page to load
       await page.waitForTimeout(2000);
+
+      if (this.debugMode) {
+        // Save screenshot for debugging
+        await page.screenshot({ path: `debug-${repositoryName.replace('/', '-')}-update.png`, fullPage: true });
+      }
 
       // Check if we have access to the settings
       const accessDenied = await page.locator("text=You don't have permission").isVisible().catch(() => false);
@@ -153,20 +244,71 @@ export class BrowserAutomator {
         throw new Error(`No access to repository settings for ${repositoryName}`);
       }
 
-      // Look for the MCP configuration field - GitHub uses a contenteditable div with cm-content class
-      const mcpConfigElement = await page.locator('.cm-content[contenteditable="true"]').first();
+      // Look for the MCP configuration field - try multiple selectors
+      const selectors = [
+        '.cm-content[contenteditable="true"]',
+        '.CodeMirror-code',
+        'textarea[name*="mcp"]',
+        'textarea[id*="mcp"]',
+        '[data-testid*="mcp"]',
+        '.form-control[name*="config"]',
+        'textarea.form-control',
+        '[contenteditable="true"]'
+      ];
+
+      let mcpConfigElement = null;
+      let foundSelector = '';
       
-      if (await mcpConfigElement.isVisible().catch(() => false)) {
+      for (const selector of selectors) {
+        try {
+          const element = page.locator(selector).first();
+          if (await element.isVisible().catch(() => false)) {
+            mcpConfigElement = element;
+            foundSelector = selector;
+            Logger.info(`Found MCP config element for update with selector: ${selector}`);
+            break;
+          }
+        } catch (e) {
+          // Continue trying other selectors
+        }
+      }
+      
+      if (mcpConfigElement) {
         // Clear existing content and input new configuration
-        // For contenteditable divs, we need to select all and replace
         await mcpConfigElement.click();
         await page.keyboard.press('Control+a');
         await page.keyboard.type(JSON.stringify(newConfig, null, 2));
         
-        // Look for and click the specific MCP save button - be more specific to avoid false positives
-        const saveButton = await page.locator('button:has-text("Save MCP configuration"), button.prc-Button-ButtonBase-c50BI:has-text("Save MCP configuration")').first();
+        if (this.debugMode) {
+          Logger.info('Pausing after entering config - press any key in the browser to continue');
+          await page.waitForTimeout(10000);
+        }
         
-        if (await saveButton.isVisible().catch(() => false)) {
+        // Look for and click the save button - try multiple selectors
+        const saveSelectors = [
+          'button:has-text("Save MCP configuration")',
+          'button:has-text("Save")',
+          'button.prc-Button-ButtonBase-c50BI:has-text("Save")',
+          'button[type="submit"]',
+          'input[type="submit"]',
+          'button.btn-primary'
+        ];
+        
+        let saveButton = null;
+        for (const selector of saveSelectors) {
+          try {
+            const button = page.locator(selector).first();
+            if (await button.isVisible().catch(() => false)) {
+              saveButton = button;
+              Logger.info(`Found save button with selector: ${selector}`);
+              break;
+            }
+          } catch (e) {
+            // Continue trying other selectors
+          }
+        }
+        
+        if (saveButton) {
           await saveButton.click();
           
           // Wait for save to complete
@@ -190,7 +332,9 @@ export class BrowserAutomator {
       Logger.error(`Failed to update MCP config for ${repositoryName}: ${error}`);
       throw error;
     } finally {
-      await page.close();
+      if (!this.debugMode) {
+        await page.close();
+      }
     }
   }
 

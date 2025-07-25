@@ -62,6 +62,8 @@ export interface ConfigurationOptions {
   forceOverwrite: boolean;
   concurrency: number;
   verbose: boolean;
+  debug: boolean;
+  apiOnly: boolean;
   resume?: boolean;
   retryFailed?: boolean;
 }

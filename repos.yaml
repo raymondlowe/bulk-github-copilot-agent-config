@@ -1,0 +1,30 @@
+# Option 1: Specify individual repositories
+repositories:
+  - "raymondlowe/test1"
+  - "raymondlowe/test2"
+  
+  
+
+# # Option 2: Apply to all repositories you have access to
+# all_accessible_repos: true
+
+# Optional: Filter when using all_accessible_repos
+filters:
+  # Only include repos you own (not just collaborate on)
+  owner_only: true
+  
+  # Only include repos with specific topics
+  topics:
+    - "copilot-enabled"
+    - "automation"
+  
+  # Exclude specific repos
+  exclude:
+    - "myusername/archived-project"
+    - "myusername/template-repo"
+
+# Processing options
+options:
+  skip_existing: true  # Skip repos with existing MCP config
+  concurrency: 1       # Process one repo at a time for safety
+  verbose: true        # Enable detailed logging
