@@ -208,10 +208,12 @@ export class BrowserAutomator {
           return newConfig;
         }
         // Merge new servers with existing ones, keeping existing ones intact
-        const merged = { ...existing };
-        for (const [serverName, serverConfig] of Object.entries(newConfig)) {
-          if (!merged[serverName]) {
-            merged[serverName] = serverConfig;
+        const merged: MCPConfig = { 
+          mcpServers: { ...existing.mcpServers }
+        };
+        for (const [serverName, serverConfig] of Object.entries(newConfig.mcpServers)) {
+          if (!merged.mcpServers[serverName]) {
+            merged.mcpServers[serverName] = serverConfig;
           }
         }
         return merged;
@@ -221,7 +223,9 @@ export class BrowserAutomator {
           return newConfig;
         }
         // Merge new servers with existing ones, overwriting existing servers with same names
-        return { ...existing, ...newConfig };
+        return { 
+          mcpServers: { ...existing.mcpServers, ...newConfig.mcpServers }
+        };
 
       case MergeStrategy.FORCE_OVERWRITE:
         return newConfig;
