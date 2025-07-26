@@ -129,8 +129,8 @@ export class BrowserAutomator {
       const checkAuthPage = await this.context.newPage();
       await checkAuthPage.goto('https://github.com/settings/profile');
       
-      // Wait a moment for page to load
-      await checkAuthPage.waitForTimeout(3000);
+      // Wait for page to fully load using URL and network idle
+      await checkAuthPage.waitForURL('**/settings/profile', { waitUntil: 'networkidle' });
       
       // Check if we're on login page or settings page
       const isLoggedIn = await checkAuthPage.locator('text=Public profile').isVisible().catch(() => false);
@@ -155,7 +155,7 @@ export class BrowserAutomator {
       // Verify authentication by checking a GitHub page that requires login
       const verifyPage = await this.context.newPage();
       await verifyPage.goto('https://github.com/settings/profile');
-      await verifyPage.waitForTimeout(3000);
+      await verifyPage.waitForURL('**/settings/profile', { waitUntil: 'networkidle' });
       
       const authVerified = await verifyPage.locator('text=Public profile').isVisible().catch(() => false);
       await verifyPage.close();

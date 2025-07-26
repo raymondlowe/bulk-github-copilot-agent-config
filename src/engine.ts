@@ -277,16 +277,20 @@ export class ConfigurationEngine {
         
         Logger.info(`Falling back to browser automation for ${repository.fullName}`);
         
-        // If interactive auth is enabled and we haven't authenticated yet, 
-        // we need to re-initialize with interactive mode
-        if (interactiveAuth && !this.browserAutomator.authenticationStatus) {
-          console.log(chalk.yellow(`\n🔄 Repository ${repository.fullName} requires interactive authentication`));
-          
-          // Re-initialize browser automation with interactive auth
-          await this.browserAutomator.cleanup();
-          this.browserAutomator = new BrowserAutomator(false, true); // Not debug mode, but interactive auth
-          await this.browserAutomator.initialize();
-          await this.browserAutomator.authenticateWithGitHub();
+        // Ensure browser automation is initialized and authenticated for fallback
+        // This handles edge cases where initial authentication may have failed or expired
+        if (!this.browserAutomator.authenticationStatus) {
+          if (interactiveAuth) {
+            console.log(chalk.yellow(`\n🔄 Repository ${repository.fullName} requires interactive authentication`));
+            
+            // Re-initialize browser automation with interactive auth
+            await this.browserAutomator.cleanup();
+            this.browserAutomator = new BrowserAutomator(false, true); // Not debug mode, but interactive auth
+            await this.browserAutomator.initialize();
+            await this.browserAutomator.authenticateWithGitHub();
+          } else {
+            throw new Error(`Browser authentication required but not available for ${repository.fullName}`);
+          }
         }
         
         // Fallback to browser automation
