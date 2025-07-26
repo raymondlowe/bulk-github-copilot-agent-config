@@ -64,6 +64,7 @@ export interface ConfigurationOptions {
   verbose: boolean;
   debug: boolean;
   apiOnly: boolean;
+  interactiveAuth: boolean;
   resume?: boolean;
   retryFailed?: boolean;
 }

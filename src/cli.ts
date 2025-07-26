@@ -29,6 +29,7 @@ program
   .option('--verbose', 'Enable verbose logging', false)
   .option('--debug', 'Enable debug mode with visible browser and extended logging', false)
   .option('--api-only', 'Use only GitHub API (no browser automation fallback)', false)
+  .option('--interactive-auth', 'Enable interactive browser authentication when API fails', false)
   .option('--resume', 'Resume from last failed repository', false)
   .option('--retry-failed', 'Retry only failed repositories from previous run', false)
   .action(async (options) => {
@@ -60,6 +61,11 @@ program
         process.exit(1);
       }
 
+      if (options.apiOnly && options.interactiveAuth) {
+        console.error(chalk.red('❌ --api-only cannot be used with --interactive-auth'));
+        process.exit(1);
+      }
+
       // Parse concurrency
       const concurrency = parseInt(options.concurrency, 10);
       if (isNaN(concurrency) || concurrency < 1) {
@@ -83,6 +89,7 @@ program
         verbose: options.verbose,
         debug: options.debug,
         apiOnly: options.apiOnly,
+        interactiveAuth: options.interactiveAuth,
         resume: options.resume,
         retryFailed: options.retryFailed
       };

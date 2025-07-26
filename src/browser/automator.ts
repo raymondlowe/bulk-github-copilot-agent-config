@@ -2,6 +2,7 @@ import { Browser, BrowserContext, Page, chromium } from 'playwright';
 import { MCPConfig, MergeStrategy } from '../types';
 import { Logger } from '../utils/logger';
 import { GitHubCLI } from '../github/cli';
+import chalk from 'chalk';
 import * as fs from 'fs';
 
 export class BrowserAutomator {
@@ -9,15 +10,21 @@ export class BrowserAutomator {
   private context: BrowserContext | null = null;
   private authToken: string | null = null;
   private debugMode: boolean = false;
+  private interactiveAuthMode: boolean = false;
+  private isAuthenticated: boolean = false;
 
-  constructor(debugMode: boolean = false) {
+  constructor(debugMode: boolean = false, interactiveAuthMode: boolean = false) {
     this.debugMode = debugMode;
+    this.interactiveAuthMode = interactiveAuthMode;
   }
 
   async initialize(): Promise<void> {
     try {
+      // In interactive auth mode, always start with visible browser for authentication
+      const headless = this.interactiveAuthMode ? false : !this.debugMode;
+      
       this.browser = await chromium.launch({
-        headless: !this.debugMode,
+        headless: headless,
         slowMo: this.debugMode ? 1000 : 0,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
       });
@@ -26,7 +33,7 @@ export class BrowserAutomator {
         userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
       });
       
-      Logger.info('Browser automation initialized');
+      Logger.info(`Browser automation initialized (headless: ${headless}, interactive: ${this.interactiveAuthMode})`);
     } catch (error) {
       throw new Error(`Failed to initialize browser: ${error}`);
     }
@@ -40,6 +47,10 @@ export class BrowserAutomator {
         'User-Agent': 'bulk-github-copilot-agent-config'
       });
     }
+  }
+
+  get authenticationStatus(): boolean {
+    return this.isAuthenticated;
   }
 
   async cleanup(): Promise<void> {
@@ -64,29 +75,160 @@ export class BrowserAutomator {
     }
 
     try {
-      // Get GitHub authentication token from CLI
+      // First try token-based authentication if available
       this.authToken = await GitHubCLI.getAuthToken();
       
-      const page = await this.context.newPage();
-      await this.setPageAuthentication(page);
-      
-      // Try to authenticate by accessing a GitHub API endpoint first
-      const response = await page.goto('https://api.github.com/user');
-      if (response && response.status() === 200) {
-        Logger.info('GitHub API authentication successful');
+      if (!this.interactiveAuthMode) {
+        // Try the original token-based approach first
+        const page = await this.context.newPage();
+        await this.setPageAuthentication(page);
         
-        // Close the API test page
-        await page.close();
-        
-        // Test repository access by trying to access a settings page
-        // We'll rely on the authentication headers for subsequent requests
-        Logger.info('GitHub authentication verified - will use token-based authentication');
+        // Try to authenticate by accessing a GitHub API endpoint first
+        const response = await page.goto('https://api.github.com/user');
+        if (response && response.status() === 200) {
+          Logger.info('GitHub API authentication successful');
+          await page.close();
+          Logger.info('GitHub authentication verified - will use token-based authentication');
+          this.isAuthenticated = true;
+          return;
+        } else {
+          await page.close();
+          throw new Error(`GitHub API authentication failed with status: ${response?.status()}`);
+        }
       } else {
-        throw new Error(`GitHub API authentication failed with status: ${response?.status()}`);
+        // Interactive authentication mode
+        await this.performInteractiveAuthentication();
       }
       
     } catch (error) {
-      throw new Error(`GitHub authentication failed: ${error}`);
+      if (this.interactiveAuthMode) {
+        throw error; // Re-throw the error from interactive auth
+      } else {
+        throw new Error(`GitHub authentication failed: ${error}`);
+      }
+    }
+  }
+
+  private async performInteractiveAuthentication(): Promise<void> {
+    if (!this.context) {
+      throw new Error('Browser context not available');
+    }
+
+    Logger.info('Starting interactive GitHub authentication...');
+    console.log(chalk.cyan('\n🔑 Interactive GitHub Authentication Required'));
+    console.log(chalk.yellow('The browser will open for you to manually log in to GitHub.'));
+    console.log(chalk.yellow('Please complete the login process and then return to this terminal.'));
+    
+    const page = await this.context.newPage();
+    
+    try {
+      // Navigate to GitHub login
+      await page.goto('https://github.com/login');
+      
+      // Check if already logged in by trying to access settings
+      const checkAuthPage = await this.context.newPage();
+      await checkAuthPage.goto('https://github.com/settings/profile');
+      
+      // Wait for page to fully load using URL and network idle
+      await checkAuthPage.waitForURL('**/settings/profile', { waitUntil: 'networkidle' });
+      
+      // Check if we're on login page or settings page
+      const isLoggedIn = await checkAuthPage.locator('text=Public profile').isVisible().catch(() => false);
+      
+      if (isLoggedIn) {
+        Logger.info('Already authenticated to GitHub');
+        await page.close();
+        await checkAuthPage.close();
+        this.isAuthenticated = true;
+        return;
+      }
+      
+      await checkAuthPage.close();
+      
+      // Not logged in, show the login page and wait for user
+      console.log(chalk.cyan('📋 Please log in to GitHub in the browser window that just opened.'));
+      console.log(chalk.yellow('Press Enter in this terminal after you have successfully logged in...'));
+      
+      // Wait for user to confirm they have logged in
+      await this.waitForUserConfirmation();
+      
+      // Verify authentication by checking a GitHub page that requires login
+      const verifyPage = await this.context.newPage();
+      await verifyPage.goto('https://github.com/settings/profile');
+      await verifyPage.waitForURL('**/settings/profile', { waitUntil: 'networkidle' });
+      
+      const authVerified = await verifyPage.locator('text=Public profile').isVisible().catch(() => false);
+      await verifyPage.close();
+      
+      if (!authVerified) {
+        throw new Error('GitHub authentication verification failed. Please ensure you are logged in to GitHub.');
+      }
+      
+      Logger.info('GitHub authentication verified successfully');
+      this.isAuthenticated = true;
+      
+      // Close the login page
+      await page.close();
+      
+      // If not in debug mode, switch to headless mode for automation
+      if (!this.debugMode) {
+        console.log(chalk.yellow('Switching to background mode for automated configuration...'));
+        await this.switchToHeadlessMode();
+      }
+      
+    } catch (error) {
+      await page.close();
+      throw new Error(`Interactive authentication failed: ${error}`);
+    }
+  }
+
+  private async waitForUserConfirmation(): Promise<void> {
+    return new Promise((resolve) => {
+      process.stdin.setRawMode(true);
+      process.stdin.resume();
+      process.stdin.on('data', function handler(key) {
+        // Check for Enter key (code 13)
+        if (key[0] === 13) {
+          process.stdin.setRawMode(false);
+          process.stdin.pause();
+          process.stdin.removeListener('data', handler);
+          resolve();
+        }
+      });
+    });
+  }
+
+  private async switchToHeadlessMode(): Promise<void> {
+    if (!this.browser || !this.context) {
+      return;
+    }
+
+    try {
+      // Save the current context state if needed
+      const cookies = await this.context.cookies();
+      
+      // Close current browser and context
+      await this.context.close();
+      await this.browser.close();
+      
+      // Restart in headless mode
+      this.browser = await chromium.launch({
+        headless: true,
+        slowMo: 0,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      
+      this.context = await this.browser.newContext({
+        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+      });
+      
+      // Restore cookies to maintain authentication
+      await this.context.addCookies(cookies);
+      
+      Logger.info('Switched to headless mode for automated processing');
+    } catch (error) {
+      Logger.warn(`Failed to switch to headless mode: ${error}`);
+      // Continue with visible browser if switching fails
     }
   }
 

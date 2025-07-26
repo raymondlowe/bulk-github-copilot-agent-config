@@ -161,6 +161,9 @@ npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.json
 
 # Apply MCP config and secrets/variables
 npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.json --secrets secrets.yaml
+
+# Use interactive authentication when API fails
+npm run configure -- configure --repos repos.yaml --mcp-config mcp-config.json --interactive-auth
 ```
 
 ## 📋 Configuration Options
@@ -215,6 +218,9 @@ The `configure` command supports these options:
 - `--force-overwrite` - Replace entire MCP configuration
 - `--concurrency <number>` - Number of repositories to process in parallel (default: 3)
 - `--verbose` - Enable verbose logging
+- `--debug` - Enable debug mode with visible browser and extended logging
+- `--api-only` - Use only GitHub API (no browser automation fallback)
+- `--interactive-auth` - Enable interactive browser authentication when API fails
 - `--resume` - Resume from last failed repository (planned feature)
 - `--retry-failed` - Retry only failed repositories from previous run (planned feature)
 
@@ -338,9 +344,37 @@ variables:
 ### Browser Automation Security
 
 - **Headless operation** - Runs without UI for security and performance
+- **Interactive authentication** - When API fails, supports manual login with `--interactive-auth`
 - **Session isolation** - Each repository configuration uses isolated browser contexts
 - **Credential injection** - Authentication tokens are injected securely without disk storage
 - **No persistent storage** - Browser sessions are cleaned up after each operation
+- **Hybrid mode** - Shows browser for authentication, then switches to background mode
+
+## 🛠 Handling API Limitations
+
+### When GitHub API Fails
+
+Currently, the GitHub API endpoints for MCP configuration may not be publicly available or documented. When the API approach fails, the tool automatically falls back to browser automation.
+
+### Interactive Authentication Solution
+
+When API authentication fails and you encounter browser authentication issues, use the `--interactive-auth` option:
+
+```bash
+npm run configure -- configure \
+  --repos repos.yaml \
+  --mcp-config mcp-config.json \
+  --interactive-auth
+```
+
+This provides a **one-time manual authentication** flow:
+1. Browser opens visibly for manual GitHub login
+2. User completes login process manually
+3. Tool verifies authentication
+4. Browser switches to background mode for automation
+5. Automated MCP configuration proceeds
+
+See [examples/interactive-auth-example.md](examples/interactive-auth-example.md) for detailed usage instructions.
 
 ## 🔧 Implementation Details
 

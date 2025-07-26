@@ -77,7 +77,7 @@ export class ConfigurationEngine {
       
       // Only initialize browser automation if not in API-only mode
       if (!options.apiOnly) {
-        this.browserAutomator = new BrowserAutomator(options.debug);
+        this.browserAutomator = new BrowserAutomator(options.debug, options.interactiveAuth);
         await this.browserAutomator.initialize();
         await this.browserAutomator.authenticateWithGitHub();
       }
@@ -89,7 +89,8 @@ export class ConfigurationEngine {
         secretsConfig,
         mergeStrategy,
         options.concurrency,
-        options.apiOnly
+        options.apiOnly,
+        options.interactiveAuth
       );
 
       // Cleanup
@@ -178,7 +179,8 @@ export class ConfigurationEngine {
     secretsConfig: SecretsConfig | undefined,
     mergeStrategy: MergeStrategy,
     concurrency: number,
-    apiOnly: boolean
+    apiOnly: boolean,
+    interactiveAuth: boolean
   ): Promise<OperationResult[]> {
     const results: OperationResult[] = [];
     const total = repositories.length;
@@ -189,7 +191,7 @@ export class ConfigurationEngine {
     // Process repositories in batches based on concurrency setting
     for (let i = 0; i < repositories.length; i += concurrency) {
       const batch = repositories.slice(i, i + concurrency);
-      const batchPromises = batch.map(repo => ({ repo, promise: this.processRepository(repo, mcpConfig, secretsConfig, mergeStrategy, apiOnly) }));
+      const batchPromises = batch.map(repo => ({ repo, promise: this.processRepository(repo, mcpConfig, secretsConfig, mergeStrategy, apiOnly, interactiveAuth) }));
       
       const batchResults = await Promise.allSettled(batchPromises.map(item => item.promise));
       
@@ -223,7 +225,8 @@ export class ConfigurationEngine {
     mcpConfig: MCPConfig,
     secretsConfig: SecretsConfig | undefined,
     mergeStrategy: MergeStrategy,
-    apiOnly: boolean
+    apiOnly: boolean,
+    interactiveAuth: boolean
   ): Promise<OperationResult> {
     const startTime = Date.now();
     const result: OperationResult = {
@@ -273,6 +276,22 @@ export class ConfigurationEngine {
         }
         
         Logger.info(`Falling back to browser automation for ${repository.fullName}`);
+        
+        // Ensure browser automation is initialized and authenticated for fallback
+        // This handles edge cases where initial authentication may have failed or expired
+        if (!this.browserAutomator.authenticationStatus) {
+          if (interactiveAuth) {
+            console.log(chalk.yellow(`\n🔄 Repository ${repository.fullName} requires interactive authentication`));
+            
+            // Re-initialize browser automation with interactive auth
+            await this.browserAutomator.cleanup();
+            this.browserAutomator = new BrowserAutomator(false, true); // Not debug mode, but interactive auth
+            await this.browserAutomator.initialize();
+            await this.browserAutomator.authenticateWithGitHub();
+          } else {
+            throw new Error(`Browser authentication required but not available for ${repository.fullName}`);
+          }
+        }
         
         // Fallback to browser automation
         mcpResult = await this.browserAutomator.configureRepository(
