@@ -1,0 +1,9 @@
+# Repository list for GitHub Copilot Agent MCP Configuration
+# Format: owner/repository
+# Example:
+# myusername/repo1
+# myusername/repo2
+# myusername/repo3
+
+# Add your repositories below (remove the # to uncomment):
+# owner/repository-name

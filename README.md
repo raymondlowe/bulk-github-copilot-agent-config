@@ -376,6 +376,32 @@ This provides a **one-time manual authentication** flow:
 
 See [examples/interactive-auth-example.md](examples/interactive-auth-example.md) for detailed usage instructions.
 
+## 🪟 Windows AutoIt Alternative
+
+For Windows users who prefer AutoIt automation, a dedicated Windows solution is available in the `windows/` directory:
+
+```bash
+# Navigate to Windows solution
+cd windows
+
+# Run setup (as Administrator)
+.\setup.ps1
+
+# Configure repositories  
+.\configure-copilot.ps1 -RepoList "config\repos.txt" -McpConfig "config\mcp-config.txt"
+```
+
+### Windows Solution Features
+
+- **AutoIt-based browser automation** for reliable Windows automation
+- **PowerShell orchestration** with comprehensive error handling
+- **Automatic AutoIt installation** and environment setup
+- **Compatible with existing configuration files** from the main project
+- **Interactive authentication support** for manual GitHub login
+- **Comprehensive validation** and logging
+
+See [windows/README.md](windows/README.md) and [windows/QUICKSTART.md](windows/QUICKSTART.md) for detailed Windows-specific documentation.
+
 ## 🔧 Implementation Details
 
 ### Architecture

@@ -1,0 +1,34 @@
+{
+  "mcpServers": {
+    "github-mcp": {
+      "type": "http",
+      "url": "https://api.github.com/mcp",
+      "headers": {
+        "Authorization": "Bearer {{ env.GITHUB_TOKEN }}"
+      },
+      "tools": [
+        "create_repository",
+        "list_repositories",
+        "get_repository",
+        "create_issue",
+        "list_issues"
+      ]
+    },
+    "filesystem-mcp": {
+      "type": "local",
+      "command": "npx",
+      "args": [
+        "filesystem-mcp"
+      ],
+      "env": {
+        "ROOT_PATH": "/workspace"
+      },
+      "tools": [
+        "read_file",
+        "write_file",
+        "list_directory",
+        "create_directory"
+      ]
+    }
+  }
+}
