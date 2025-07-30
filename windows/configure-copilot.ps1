@@ -23,7 +23,7 @@
 .PARAMETER DryRun
     Preview changes without applying them.
 
-.PARAMETER Verbose
+.PARAMETER VerboseLogging
     Enable detailed logging and progress information.
 
 .PARAMETER Interactive
@@ -55,11 +55,11 @@
 
 .EXAMPLE
     # Test automation on first 2 repositories only
-    .\configure-copilot.ps1 -RepoList "config\repos.txt" -McpConfig "config\mcp-config.txt" -TestFirst 2 -Verbose
+    .\configure-copilot.ps1 -RepoList "config\repos.txt" -McpConfig "config\mcp-config.txt" -TestFirst 2 -VerboseLogging
 
 .EXAMPLE
     # Dry run on all repositories with detailed logging
-    .\configure-copilot.ps1 -RepoList "repos.txt" -McpConfig "mcp.json" -DryRun -Verbose
+    .\configure-copilot.ps1 -RepoList "repos.txt" -McpConfig "mcp.json" -DryRun -VerboseLogging
 
 .EXAMPLE
     # Interactive mode with slower automation timing
@@ -75,7 +75,7 @@
     
     For troubleshooting:
     - Use -TestFirst 1 to test on a single repository
-    - Use -Verbose to see detailed progress information
+    - Use -VerboseLogging to see detailed progress information
     - Adjust timing parameters if automation is too fast/slow
     - Check logs directory for detailed AutoIt execution logs
 #>
@@ -88,7 +88,7 @@ param(
     [string]$McpConfig,
     
     [switch]$DryRun,
-    [switch]$Verbose,
+    [switch]$VerboseLogging,
     [switch]$Interactive,
     
     [Parameter(HelpMessage="Test on this many repositories first (0 = all)")]
@@ -115,6 +115,7 @@ $LogFile = "logs\configure-$(Get-Date -Format 'yyyyMMdd-HHmmss').log"
 $AutoItScript = "autoit\github-copilot-config.au3"
 $AuthScript = "autoit\github-auth.au3"
 $TempDir = "$env:TEMP\github-copilot-config"
+$AutoItExePath = $null  # Will be set during prerequisite check
 
 # Global configuration passed to AutoIt scripts
 $GlobalConfig = @{
@@ -122,7 +123,7 @@ $GlobalConfig = @{
     ActionDelay = $ActionDelay
     PageLoadDelay = $PageLoadDelay
     MaxRetries = $MaxRetries
-    Verbose = $Verbose.IsPresent
+    Verbose = $VerboseLogging.IsPresent
     Interactive = $Interactive.IsPresent
     DryRun = $DryRun.IsPresent
 }
@@ -138,7 +139,7 @@ Write-Host "  MCP Config: $McpConfig" -ForegroundColor Gray
 Write-Host "  Test First: $(if ($TestFirst -eq 0) { 'All repositories' } else { "$TestFirst repositories" })" -ForegroundColor Gray
 Write-Host "  Dry Run: $($DryRun.IsPresent)" -ForegroundColor Gray
 Write-Host "  Interactive Mode: $($Interactive.IsPresent)" -ForegroundColor Gray
-Write-Host "  Verbose Logging: $($Verbose.IsPresent)" -ForegroundColor Gray
+Write-Host "  Verbose Logging: $($VerboseLogging.IsPresent)" -ForegroundColor Gray
 Write-Host "  Tab Attempts: $TabAttempts" -ForegroundColor Gray
 Write-Host "  Action Delay: ${ActionDelay}ms" -ForegroundColor Gray
 Write-Host "  Page Load Delay: ${PageLoadDelay}s" -ForegroundColor Gray
@@ -170,7 +171,7 @@ function Write-Log {
         "WARN"  { Write-Host $logEntry -ForegroundColor Yellow }
         "SUCCESS" { Write-Host $logEntry -ForegroundColor Green }
         "VERBOSE" { 
-            if ($Verbose) { 
+            if ($VerboseLogging) { 
                 Write-Host $logEntry -ForegroundColor Cyan 
             }
         }
@@ -196,13 +197,47 @@ function Write-ProgressLog {
 function Test-Prerequisites {
     Write-Log "Checking prerequisites..."
     
-    # Check AutoIt installation
-    $autoItPath = Get-Command "AutoIt3.exe" -ErrorAction SilentlyContinue
+    # Check AutoIt installation - try multiple locations
+    $autoItPath = $null
+    $autoItLocations = @(
+        "AutoIt3.exe",  # Check PATH first
+        "C:\Program Files (x86)\AutoIt3\AutoIt3.exe",
+        "C:\Program Files\AutoIt3\AutoIt3.exe",
+        "$env:ProgramFiles\AutoIt3\AutoIt3.exe",
+        "${env:ProgramFiles(x86)}\AutoIt3\AutoIt3.exe"
+    )
+    
+    foreach ($location in $autoItLocations) {
+        try {
+            if ($location -eq "AutoIt3.exe") {
+                $autoItPath = Get-Command $location -ErrorAction SilentlyContinue
+                if ($autoItPath) {
+                    Write-VerboseLog "AutoIt found in PATH: $($autoItPath.Source)"
+                    break
+                }
+            } else {
+                if (Test-Path $location) {
+                    $autoItPath = $location
+                    Write-VerboseLog "AutoIt found at: $location"
+                    break
+                }
+            }
+        } catch {
+            Write-VerboseLog "Failed to check location: $location"
+        }
+    }
+    
     if (!$autoItPath) {
-        Write-Log "AutoIt not found. Please run setup.ps1 first." "ERROR"
+        Write-Log "AutoIt not found in any common locations. Please run setup.ps1 first." "ERROR"
+        Write-Log "Checked locations:" "ERROR"
+        foreach ($loc in $autoItLocations[1..($autoItLocations.Count-1)]) {
+            Write-Log "  - $loc" "ERROR"
+        }
         return $false
     }
-    Write-VerboseLog "AutoIt found at: $($autoItPath.Source)"
+    
+    # Store the AutoIt path globally
+    $global:AutoItExePath = if ($autoItPath -is [string]) { $autoItPath } else { $autoItPath.Source }
     
     # Check input files
     if (!(Test-Path $RepoList)) {
@@ -228,7 +263,7 @@ function Test-Prerequisites {
 function Get-RepositoryList {
     Write-ProgressLog "Reading repository list from: $RepoList"
     
-    $repos = @()
+    $repos = [System.Collections.ArrayList]@()
     $lines = Get-Content $RepoList | Where-Object { $_ -match '\S' -and !$_.StartsWith('#') }
     
     Write-VerboseLog "Found $($lines.Count) non-empty lines in repository list"
@@ -238,7 +273,7 @@ function Get-RepositoryList {
         Write-VerboseLog "Processing line: '$line'"
         
         if ($line -match '^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$') {
-            $repos += $line
+            [void]$repos.Add($line)
             Write-VerboseLog "✓ Added repository: $line"
         }
         else {
@@ -251,7 +286,11 @@ function Get-RepositoryList {
     # Apply TestFirst limitation if specified
     if ($TestFirst -gt 0 -and $repos.Count -gt $TestFirst) {
         $originalCount = $repos.Count
-        $repos = $repos[0..($TestFirst-1)]
+        $limitedRepos = [System.Collections.ArrayList]@()
+        for ($i = 0; $i -lt $TestFirst; $i++) {
+            [void]$limitedRepos.Add($repos[$i])
+        }
+        $repos = $limitedRepos
         Write-Log "🧪 TEST MODE: Limited to first $TestFirst repositories (of $originalCount total)" "WARN"
         Write-Host ""
         Write-Host "📝 Repositories to be processed in test mode:" -ForegroundColor Yellow
@@ -357,12 +396,14 @@ function Invoke-AutoItScript {
     $arguments += "`"$PageLoadDelay`""
     
     Write-VerboseLog "  AutoIt arguments: $($arguments -join ' ')"
+    Write-VerboseLog "  DEBUG: Repository parameter = '$Repository'"
+    Write-VerboseLog "  DEBUG: Arguments array = $($arguments | ForEach-Object { "'$_'" } | Join-String -Separator ', ')"
     
     try {
         Write-ProgressLog "🤖 Executing AutoIt automation for $Repository"
         
         $startTime = Get-Date
-        $process = Start-Process -FilePath "AutoIt3.exe" -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
+        $process = Start-Process -FilePath $global:AutoItExePath -ArgumentList $arguments -Wait -PassThru -WindowStyle Hidden
         $endTime = Get-Date
         $duration = $endTime - $startTime
         
@@ -416,10 +457,10 @@ function Process-Repository {
         [int]$RepositoryIndex = 0,
         [int]$TotalRepositories = 1
     )
-    
+
     Write-Host ""
     Write-ProgressLog "🏃‍♂️ Processing repository [$($RepositoryIndex + 1)/$TotalRepositories]: $Repository (attempt $AttemptNumber/$MaxRetries)"
-    
+
     if ($DryRun) {
         Write-Log "🔍 [DRY RUN] Would configure MCP for repository: $Repository"
         Write-VerboseLog "  Would navigate to: https://github.com/$Repository/settings/copilot/coding_agent"
@@ -427,37 +468,39 @@ function Process-Repository {
         Write-VerboseLog "  Would use action delay: ${ActionDelay}ms"
         Write-VerboseLog "  Would use page load delay: ${PageLoadDelay}s"
         Write-VerboseLog "  Would apply MCP configuration from: $ConfigPath"
-        
+
         # Simulate processing time for realistic dry run
         Start-Sleep -Seconds 2
         return $true
     }
-    
+
     Write-VerboseLog "🎯 Starting automation for repository: $Repository"
     Write-VerboseLog "  Target URL: https://github.com/$Repository/settings/copilot/coding_agent"
     Write-VerboseLog "  Configuration source: $ConfigPath"
     Write-VerboseLog "  Attempt: $AttemptNumber of $MaxRetries"
-    
-    # Invoke AutoIt script with current configuration
+
+    # Use the original Invoke-AutoItScript function for correct script execution and exit code handling
     $success = Invoke-AutoItScript -ScriptPath $AutoItScript -Repository $Repository -ConfigPath $ConfigPath -InteractiveMode $Interactive
-    
-    if ($success) {
+
+    if ($success -eq $true) {
         Write-Log "✅ Successfully configured repository: $Repository" "SUCCESS"
         Write-VerboseLog "  Configuration applied and saved successfully"
         return $true
-    }
-    else {
+    } elseif ($success -eq $false) {
+        # Check the last exit code from the AutoIt script
+        $lastExitCode = $LASTEXITCODE
+        if ($lastExitCode -eq 4) {
+            Write-Log "❌ Page not found (404) for repository: $Repository. Skipping further retries." "ERROR"
+            return $false
+        }
         Write-Log "❌ Failed to configure repository: $Repository (attempt $AttemptNumber)" "ERROR"
-        
         if ($AttemptNumber -lt $MaxRetries) {
             Write-Log "🔄 Retrying repository: $Repository" "WARN"
             Write-VerboseLog "  Waiting $DelayBetweenRepos seconds before retry..."
             Start-Sleep -Seconds $DelayBetweenRepos
-            
             # Recursive retry with incremented attempt number
             return Process-Repository -Repository $Repository -ConfigPath $ConfigPath -AttemptNumber ($AttemptNumber + 1) -RepositoryIndex $RepositoryIndex -TotalRepositories $TotalRepositories
-        }
-        else {
+        } else {
             Write-Log "💥 Failed to configure repository after $MaxRetries attempts: $Repository" "ERROR"
             Write-VerboseLog "  All retry attempts exhausted"
             return $false
@@ -522,7 +565,7 @@ function Show-Summary {
     Write-Host ""
     Write-Log "📋 Log file location: $LogFile"
     
-    if ($Verbose) {
+    if ($VerboseLogging) {
         Write-VerboseLog "Detailed execution statistics:"
         Write-VerboseLog "  Average time per repository: $($Duration.TotalSeconds / $Total) seconds"
         Write-VerboseLog "  Configuration parameters used:"

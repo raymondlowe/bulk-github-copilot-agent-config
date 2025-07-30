@@ -1,9 +1,56 @@
-# Repository list for GitHub Copilot Agent MCP Configuration
-# Format: owner/repository
-# Example:
-# myusername/repo1
-# myusername/repo2
-# myusername/repo3
-
-# Add your repositories below (remove the # to uncomment):
-# owner/repository-name
+raymondlowe/cheung-chau.com
+raymondlowe/hk-stanley-market.com
+raymondlowe/hk-victoria-peak.com
+raymondlowe/ladies-market.hk
+raymondlowe/lamma-island.com
+raymondlowe/pamukkale-turkey.com
+raymondlowe/sneakers-street.hk
+raymondlowe/temple-street-night-market.hk
+raymondlowe/yellowstone-national-park.com
+winnietsoi/apliu-street.hk
+winnietsoi/atlantic-road.com
+winnietsoi/barber-park.com
+winnietsoi/ben-thanh-market.com
+winnietsoi/bird-garden.hk
+winnietsoi/boulevard-haussmann-de-paris.com
+winnietsoi/bukit-bintang.com
+winnietsoi/castel-dell-ovo.com
+winnietsoi/cat-street.hk
+winnietsoi/causeway-bay-hk.com
+winnietsoi/chao-phraya-river.com
+winnietsoi/chefchaouen-morocco.com
+winnietsoi/cheung-sha-wan-road.hk
+winnietsoi/coral-bay-cyprus.com
+winnietsoi/corralejo-fuerteventura.net
+winnietsoi/crawford-market.com
+winnietsoi/eg-naama-bay.com
+winnietsoi/floating-market-bangkok.com
+winnietsoi/flower-market.hk
+winnietsoi/granville-road.hk
+winnietsoi/hk-mongkok.com
+winnietsoi/hk-wanchai.com
+winnietsoi/ho-chi-minh-city.asia
+winnietsoi/hong-kong-directory.com
+winnietsoi/hong-kong-island.com
+winnietsoi/ile-de-la-cite-fr.com
+winnietsoi/lamai-beach.com
+winnietsoi/lantau-island.com
+winnietsoi/lei-yue-mun.com
+winnietsoi/melissani-cave.com
+winnietsoi/myeongdong-kr.com
+winnietsoi/plaza-ayuntamiento.com
+winnietsoi/plaza-blanca.com
+winnietsoi/praia-do-futuro.com
+winnietsoi/pratunam-market-bangkok.com
+winnietsoi/recoleta-ba.com
+winnietsoi/rue-montorgueil.com
+winnietsoi/rue-mouffetard.com
+winnietsoi/sham-shui-po.com
+winnietsoi/shilin-night-market.com
+winnietsoi/the-markt.com
+winnietsoi/trail-ridge-road.com
+winnietsoi/tsimshatsui.hk
+winnietsoi/verrazano-narrows-bridge.com
+winnietsoi/wlmedia.com
+winnietsoi/ximending.tw
+winnietsoi/zuma-beach.com

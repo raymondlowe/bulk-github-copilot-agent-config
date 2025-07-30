@@ -1,0 +1,819 @@
+# All issues created by raymondlowe in the last 6 months
+
+
+---
+Repository: raymondlowe/cheung-chau.com
+URL: https://github.com/raymondlowe/cheung-chau.com/issues/7
+Created: 07/29/2025 20:46:05
+Title: Look for more related topics and write matching new pages
+
+Use the Google Search Console data to see what topics this site already ranks well for.  Then use a KeywordsEverywhere People Also Search For (PASF) tool to find additional related queries.  Keep going until you have a list of topics that are relevant and related to the central topic of the site but which are not explicitly covered, covered in detail, or have dedicated pages. Based on that draft a list of high priority new pages to create, then create those pages using research tools to get background and specific facts. Focus on topics that have high CPC and balance that with high Volume and moderate competition.
+
+For example if a website is about Strawberries it might rank for the query [strawberry plants], but the KeywordsEverywhere tool shows that people also search for [do strawberry plants need direct sunlight], and from this you can see that an article "How to ensure your Strawberry plants get sufficient sunlight for a sweet crop!" would be a good article you can then write.
+
+Address the underlying intent, need, pain points, of the reader to ensure that the new pages fully satisfy them.
+
+---
+Repository: raymondlowe/cheung-chau.com
+URL: https://github.com/raymondlowe/cheung-chau.com/issues/5
+Created: 07/29/2025 13:24:02
+Title: Xml fact file
+
+In the .private directory make a fact file. Use xml.  Make the first entry an example,  use BNF style to show options.
+
+Include an id , the fact, the source , fact check status, etc.
+
+Then for each fact, fact check it using Tavily search and extract. Update the fact file with status, source citation as a url,  date checked.
+
+Add any extra fields that seems reasonable in order to help ensure accuracy of this travel guide website. The fact file will be used for updating .
+
+Get the proposed facts by scanning the existing html files, then fact check and later on edit and improve the site.
+
+Cheung Chau is an island is a fact. There are many seafood restaurants there is a fact. It is a fun place is an opinion,  not a fact. Vegetarian food is available during Bun Festival is a fact. It is exciting is an opinion, not a fact.
+
+---
+Repository: raymondlowe/cheung-chau.com
+URL: https://github.com/raymondlowe/cheung-chau.com/issues/3
+Created: 07/28/2025 05:19:35
+Title: Actioin plan
+
+Look at the detailed action plan document, execute the plan.
+
+---
+Repository: raymondlowe/cheung-chau.com
+URL: https://github.com/raymondlowe/cheung-chau.com/issues/1
+Created: 07/27/2025 12:41:21
+Title: Famous fishball shop closed
+
+The shop is closed. Update but mention there are still plenty of places to get fish all and other snacks.
+
+Review all the snack dining and restaurants, cross check with latest 2025 details. Search in Chinese as well as English for full details of Cheung Chau food options. Update and create pages as necessary 
+
+
+---
+Repository: raymondlowe/hk-stanley-market.com
+URL: https://github.com/raymondlowe/hk-stanley-market.com/issues/6
+Created: 07/29/2025 21:06:15
+Title: XML fact file
+
+**Instruction:**
+
+You are tasked with creating and maintaining a rigorously fact-checked, high-quality informational website. Begin by scanning all existing HTML content to extract **proposed factual claims**ÔÇösuch as locations, activities, services, events, and amenitiesÔÇöwhile filtering out opinions, subjective language, or promotional content.  
+
+In the `.private` directory, create a **fact file** named `facts.xml` using XML format. The first entry must be a well-structured **example** written in **BNF-like syntax** to illustrate acceptable formats and required fields.  
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+BNF Grammar for Fact File Structure:
+
+<fact-file> ::= "<facts>" <fact>* "</facts>"
+<fact> ::= "<fact id=\"" <id> "\">" 
+           <fact-statement> 
+           <source> 
+           <category> 
+           <fact-check-status> 
+           <verification-details>? 
+           <metadata> 
+           "</fact>"
+
+<id> ::= <string>                    <!-- Unique identifier -->
+<fact-statement> ::= "<statement>" <text> "</statement>"
+<source> ::= "<source>" <url-or-file> "</source>"
+<category> ::= "<category>" ( "geography" | "food" | "culture" | "transportation" | "events" | "accommodation" | "recreation" | "history" | "economy" ) "</category>"
+<fact-check-status> ::= "<status>" ( "unverified" | "verified" | "false" | "partially-true" | "disputed" ) "</status>"
+<verification-details> ::= "<verification>" 
+                          <verification-url>? 
+                          <date-checked> 
+                          <checked-by> 
+                          <confidence-level> 
+                          <notes>? 
+                          "</verification>"
+<metadata> ::= "<metadata>" 
+               <created-date> 
+               <last-updated> 
+               <importance-level> 
+               <tourist-relevance> 
+               "</metadata>"
+
+```
+
+Adjust the XML structure as necessary, adding new fields and tags that are relevant to this case is fine. The XML structure is a framework, not a iron clad rule.
+
+ Use **Tavily Search and Extract** to independently verify every proposed fact. Update the XML file with:  
+ - Verified `citation_url` from authoritative sources  
+ - Accurate `date_checked` (use current system date; correct any outdated entries)  
+ - Appropriate `status` based on verification outcome  
+
+ Expand your research to ensure comprehensive coverage:  
+ - Include **all named restaurants** or similar things such as **shops**, **museums**, **businesses**, verifying existence, cuisine, availability (especially during events like the Bun Festival)  
+ - Cover **beaches** or similar such as **parks**, **promenades**, **photo locations**, including names, accessibility, facilities, safety  
+ - Include **recreational activities** (e.g., windsurfing, kayaking, bike rentals, wine tasting, people watching)  
+ - Verify **event dates, durations, and cultural significance**  
+ - Add any other tourist-relevant categories missing from initial scans  
+
+ After completing the fact-checking phase, use the verified `facts.xml` and supporting research files in `.private` to **enhance the website**:  
+ - Edit, rewrite, and expand pages for accuracy, depth, and usefulness  
+ - Add new sections or pages where gaps exist  
+ - Ensure content is detailed, engaging, and helpfulÔÇötransforming raw facts into compelling, trustworthy visitor guidance  
+ - It is good to express opinion, but combine them or use them as an adjunct to facts  
+ - Prioritize high CPC terms, topics with a good combination of high volume and moderate competition.
+ - In your writing focus on readability, clarity, structure, and user experience. Use full evocative sensorial language, write full expressive paragraphs but keep vocabulary to middle school level. Break up walls of text with call out boxes, "tips", "recommendations" etc as well as lists, emojis and links to other resources both internal and external.
+
+ The final website edots should make the site even more be impressively informative, meticulously accurate, and clearly superior to its previous versionÔÇöserving as a reliable resource for travelers.
+
+
+---
+Repository: raymondlowe/hk-stanley-market.com
+URL: https://github.com/raymondlowe/hk-stanley-market.com/issues/5
+Created: 07/28/2025 05:23:44
+Title: detailed-action-plan-hk-stanley-market.com.md
+
+Read the file, do the plan
+
+---
+Repository: raymondlowe/hk-stanley-market.com
+URL: https://github.com/raymondlowe/hk-stanley-market.com/issues/3
+Created: 07/27/2025 12:12:29
+Title: Food page broken
+
+https://www.hk-stanley-market.com/restaurant/
+
+This page doesn't render any content. Fix it. Use the proper template dwt and fill it with current info. Check the private plan document as well.
+
+---
+Repository: raymondlowe/hk-stanley-market.com
+URL: https://github.com/raymondlowe/hk-stanley-market.com/issues/1
+Created: 07/27/2025 10:48:03
+Title: Improve website
+
+Look at the plan in the .private folder.  Execute the plan to improve this website
+
+---
+Repository: raymondlowe/ladies-market.hk
+URL: https://github.com/raymondlowe/ladies-market.hk/issues/1
+Created: 07/29/2025 22:54:02
+Title: Automated Issue
+
+review the material in the .private folder and create and add into that folder a summary of "key topics this website ranks for" and "potential topics for this website", based on material in the google search console queries as well as any other relevant documents in the .private folder.
+
+---
+Repository: raymondlowe/lamma-island.com
+URL: https://github.com/raymondlowe/lamma-island.com/issues/1
+Created: 07/27/2025 10:45:12
+Title: Improve websites
+
+Look at the plan in the .private folder.  Execute the plan to improve this website
+
+---
+Repository: raymondlowe/pamukkale-turkey.com
+URL: https://github.com/raymondlowe/pamukkale-turkey.com/issues/1
+Created: 07/27/2025 10:44:37
+Title: Upgrade this website following the plan
+
+Look at the plan in the .private folder.  Execute the plan to improve this website
+
+---
+Repository: raymondlowe/temple-street-night-market.hk
+URL: https://github.com/raymondlowe/temple-street-night-market.hk/issues/3
+Created: 07/28/2025 05:20:55
+Title: do the plan
+
+Look at the .private folder, do the plan, use the research material.
+
+---
+Repository: raymondlowe/temple-street-night-market.hk
+URL: https://github.com/raymondlowe/temple-street-night-market.hk/issues/1
+Created: 07/17/2025 23:34:58
+Title: The "nearby-hotels.html" web page need updating
+
+Use the following information to make a much expanded detailed and enhanced naerby-hotels.html page. 
+
+Have verbose and descriptive paragraphs about each hotel building on the existing ones and using additional inormation from the reference material below as well as your own knowledge.
+
+Expand the introductory section with tips and advice on choosing hotels.  Start with a strong engaging hook that will make people want to read on.
+
+Aim to make this page a world class resource that people will value, share and link to .
+
+
+Nathan Hotel Hong Kong
+DEAL
+HK$929
+16% less than usual
+3.9
+(1.8K)
+Amenities for Nathan Hotel Hong Kong, a 4-star hotel.: Breakfast ($), Free Wi-Fi, Air conditioning, Fitness centre, Bar, Restaurant, Airport shuttle, Full-service laundry,
+4-star hotel
+Breakfast ($)
+Free Wi-Fi
+Air conditioning
+Fitness centre
+Bar
+Restaurant
+Airport shuttle
+Full-service laundry
+This location220 m away
+Photo 1
+Photo 2
+Photo 3
+Photo 4
+Photo 5
+Photo 6
+DEAL
+Ocean Inn
+[HK$343](https://www.google.com/travel/search?q=hong%20kong%20hotels%20near%20temple%20street%20night%20market&g2lb=4899571%2C4899572%2C4965990%2C4969803%2C72302247%2C72317059%2C72414906%2C72471280%2C72472051%2C72485658%2C72560029%2C72573224%2C72616120%2C72647020%2C72648289%2C72686036%2C72760082%2C72803964%2C72832976%2C72882230%2C72958624%2C72959983%2C72990341%2C73021391%2C73027855%2C73034798&hl=en-HK&gl=hk&ssta=1&ts=CAESCgoCCAMKAggDEAAaRwopEicyJTB4MzQwNDAwZWFmMzBiYzBjZDoweGI3ZGQ0MzJmYWY4NDMzYTQSGhIUCgcI6Q8QBxgUEgcI6Q8QBxgVGAEyAhAAKgcKBToDSEtE&qs=CAEyJENoY0loc0RJd056b2g2dGxHZ3N2Wnk4eGRtNDViSEJ4YWhBQjgGQgkRfB3pl99ZQOVCCRHbnSQPimbxAUIJEYU0LYle3hlnWnQycqoBbxABKhQiEGhvbmcga29uZyBob3RlbHMoADIfEAEiG5Fb82VzKBWUVnFcCng9q6IjWtCv62sldNWJFDI0EAIiMGhvbmcga29uZyBob3RlbHMgbmVhciB0ZW1wbGUgc3RyZWV0IG5pZ2h0IG1hcmtldA&ap=KigKEgnuuQExhks2QBHTotetQopcQBISCfLGBOAEUjZAEdOi11Gdi1xAMABoAQ&ictx=111&ved=2ahUKEwjAy8uvhsWOAxVPTcIFHc5tIjwQrsMEegQIAxBP)
+4.4
+(134)
+Amenities for Ocean Inn, a 2-star hotel.: Free Wi-Fi, Air conditioning, Child-friendly, Smoke-free property,
+2-star hotel
+Free Wi-Fi
+Air conditioning
+Child-friendly
+Smoke-free property
+This location220 m away
+Photo 1
+Photo 2
+Photo 3
+Photo 4
+Photo 5
+Photo 6
+Eaton HK
+[HK$1,006](https://www.google.com/travel/search?q=hong%20kong%20hotels%20near%20temple%20street%20night%20market&g2lb=4899571%2C4899572%2C4965990%2C4969803%2C72302247%2C72317059%2C72414906%2C72471280%2C72472051%2C72485658%2C72560029%2C72573224%2C72616120%2C72647020%2C72648289%2C72686036%2C72760082%2C72803964%2C72832976%2C72882230%2C72958624%2C72959983%2C72990341%2C73021391%2C73027855%2C73034798&hl=en-HK&gl=hk&ssta=1&ts=CAESCgoCCAMKAggDEAAaRwopEicyJTB4MzQwNDAwZWFmMzBiYzBjZDoweGI3ZGQ0MzJmYWY4NDMzYTQSGhIUCgcI6Q8QBxgUEgcI6Q8QBxgVGAEyAhAAKgcKBToDSEtE&qs=CAEyI0NoWUkwYWIyd09hUHd1d3lHZ292YlM4d00yTnhYelJtRUFFOAZCCRF8HemX31lA5UIJEdudJA-KZvEBQgkRhTQtiV7eGWdadDJyqgFvEAEqFCIQaG9uZyBrb25nIGhvdGVscygAMh8QASIbkVvzZXMoFZRWcVwKeD2roiNa0K_rayV01YkUMjQQAiIwaG9uZyBrb25nIGhvdGVscyBuZWFyIHRlbXBsZSBzdHJlZXQgbmlnaHQgbWFya2V0&ap=KigKEgnuuQExhks2QBHTotetQopcQBISCfLGBOAEUjZAEdOi11Gdi1xAMABoAQ&ictx=111&ved=2ahUKEwjAy8uvhsWOAxVPTcIFHc5tIjwQrsMEegQIAxBq)
+4.1
+(4.8K)
+Amenities for Eaton HK, a 4-star hotel.: Breakfast ($), Free Wi-Fi, Outdoor pool, Air conditioning, Pet-friendly, Fitness centre, Bar, Restaurant,
+4-star hotel
+Breakfast ($)
+Free Wi-Fi
+Outdoor pool
+Air conditioning
+Pet-friendly
+Fitness centre
+Bar
+Restaurant
+This location250 m away
+Photo 1
+Photo 2
+Set your dates to update prices
+Prices shown for 20ÔÇô21 Jul
+Jordan Comfort Inn
+GREAT PRICE
+HK$334
+for a 3-star hotel
+3.7
+(44)
+Amenities for Jordan Comfort Inn, a 3-star hotel.: Free Wi-Fi, Air conditioning, Restaurant, Smoke-free property,
+3-star hotel
+Free Wi-Fi
+Air conditioning
+Restaurant
+Smoke-free property
+This location250 m away
+Photo 1
+Photo 2
+GREAT PRICE
+Hotel Madera Hong Kong
+GREAT PRICE
+HK$884
+for a 4-star hotel
+4.1
+(700)
+Amenities for Hotel Madera Hong Kong, a 4-star hotel.: Breakfast ($), Free Wi-Fi, Hot tub, Air conditioning, Fitness centre, Parking, Bar, Restaurant,
+4-star hotel
+Breakfast ($)
+Free Wi-Fi
+Hot tub
+Air conditioning
+Fitness centre
+Parking
+Bar
+Restaurant
+This location210 m away
+Photo 1
+Photo 2
+Photo 3
+Photo 4
+Photo 5
+Photo 6
+GREAT PRICE
+Õ»îÚâ¢Þ│ôÚñ¿ Fu Dou Guest House
+[HK$417](https://www.google.com/travel/search?q=hong%20kong%20hotels%20near%20temple%20street%20night%20market&g2lb=4899571%2C4899572%2C4965990%2C4969803%2C72302247%2C72317059%2C72414906%2C72471280%2C72472051%2C72485658%2C72560029%2C72573224%2C72616120%2C72647020%2C72648289%2C72686036%2C72760082%2C72803964%2C72832976%2C72882230%2C72958624%2C72959983%2C72990341%2C73021391%2C73027855%2C73034798&hl=en-HK&gl=hk&ssta=1&ts=CAESCgoCCAMKAggDEAAaRwopEicyJTB4MzQwNDAwZWFmMzBiYzBjZDoweGI3ZGQ0MzJmYWY4NDMzYTQSGhIUCgcI6Q8QBxgUEgcI6Q8QBxgVGAEyAhAAKgcKBToDSEtE&qs=CAEyJ0Noa1FscjdzLUl1S3I1b2hHZzB2Wnk4eE1YaGtkM056YTJoNkVBSTgGQgkRfB3pl99ZQOVCCRHbnSQPimbxAUIJEYU0LYle3hlnWnQycqoBbxABKhQiEGhvbmcga29uZyBob3RlbHMoADIfEAEiG5Fb82VzKBWUVnFcCng9q6IjWtCv62sldNWJFDI0EAIiMGhvbmcga29uZyBob3RlbHMgbmVhciB0ZW1wbGUgc3RyZWV0IG5pZ2h0IG1hcmtldA&ap=KigKEgnuuQExhks2QBHTotetQopcQBISCfLGBOAEUjZAEdOi11Gdi1xAMABoAQ&ictx=111&ved=2ahUKEwjAy8uvhsWOAxVPTcIFHc5tIjwQrsMEegUIAxDNAQ)
+4.0
+(3)
+Amenities for Õ»îÚâ¢Þ│ôÚñ¿ Fu Dou Guest House: Apartment, Sleeps 8, 4 bedrooms, 3 bathrooms, 6 beds, Air conditioning, Child-friendly, Pet-friendly, Smoke-free,
+Apartment
+Sleeps 8
+4 bedrooms
+3 bathrooms
+6 beds
+Air conditioning
+Child-friendly
+Pet-friendly
+Smoke-free
+This location110 m away
+Photo 1
+Photo 2
+Photo 3
+Photo 4
+Photo 5
+Photo 6
+HOLIDAY RENTAL
+Goodrich Hotel
+[HK$593](https://www.google.com/travel/search?q=hong%20kong%20hotels%20near%20temple%20street%20night%20market&g2lb=4899571%2C4899572%2C4965990%2C4969803%2C72302247%2C72317059%2C72414906%2C72471280%2C72472051%2C72485658%2C72560029%2C72573224%2C72616120%2C72647020%2C72648289%2C72686036%2C72760082%2C72803964%2C72832976%2C72882230%2C72958624%2C72959983%2C72990341%2C73021391%2C73027855%2C73034798&hl=en-HK&gl=hk&ssta=1&ts=CAESCgoCCAMKAggDEAAaRwopEicyJTB4MzQwNDAwZWFmMzBiYzBjZDoweGI3ZGQ0MzJmYWY4NDMzYTQSGhIUCgcI6Q8QBxgUEgcI6Q8QBxgVGAEyAhAAKgcKBToDSEtE&qs=CAEyJkNoZ0lwTWJaemVyRHk2RFNBUm9MTDJjdk1YUnFOVEExZERVUUFROAZCCRF8HemX31lA5UIJEdudJA-KZvEBQgkRhTQtiV7eGWdadDJyqgFvEAEqFCIQaG9uZyBrb25nIGhvdGVscygAMh8QASIbkVvzZXMoFZRWcVwKeD2roiNa0K_rayV01YkUMjQQAiIwaG9uZyBrb25nIGhvdGVscyBuZWFyIHRlbXBsZSBzdHJlZXQgbmlnaHQgbWFya2V0&ap=KigKEgnuuQExhks2QBHTotetQopcQBISCfLGBOAEUjZAEdOi11Gdi1xAMABoAQ&ictx=111&ved=2ahUKEwjAy8uvhsWOAxVPTcIFHc5tIjwQrsMEegUIAxDnAQ)
+3.1
+(123)
+Amenities for Goodrich Hotel, a 3-star hotel.: Free Wi-Fi, Air conditioning, Restaurant, Smoke-free property,
+3-star hotel
+Free Wi-Fi
+Air conditioning
+Restaurant
+Smoke-free property
+This location70 m away
+Photo 1
+Photo 2
+Temple Street Hotel
+[HK$249](https://www.google.com/travel/search?q=hong%20kong%20hotels%20near%20temple%20street%20night%20market&g2lb=4899571%2C4899572%2C4965990%2C4969803%2C72302247%2C72317059%2C72414906%2C72471280%2C72472051%2C72485658%2C72560029%2C72573224%2C72616120%2C72647020%2C72648289%2C72686036%2C72760082%2C72803964%2C72832976%2C72882230%2C72958624%2C72959983%2C72990341%2C73021391%2C73027855%2C73034798&hl=en-HK&gl=hk&ssta=1&ts=CAESCgoCCAMKAggDEAAaRwopEicyJTB4MzQwNDAwZWFmMzBiYzBjZDoweGI3ZGQ0MzJmYWY4NDMzYTQSGhIUCgcI6Q8QBxgUEgcI6Q8QBxgVGAEyAhAAKgcKBToDSEtE&qs=CAEyKENob0k4Zi13dVpmT3B1dmFBUm9OTDJjdk1URmlOek5yYTI1b2NoQUI4BkIJEXwd6ZffWUDlQgkR250kD4pm8QFCCRGFNC2JXt4ZZ1p0MnKqAW8QASoUIhBob25nIGtvbmcgaG90ZWxzKAAyHxABIhuRW_NlcygVlFZxXAp4PauiI1rQr-trJXTViRQyNBACIjBob25nIGtvbmcgaG90ZWxzIG5lYXIgdGVtcGxlIHN0cmVldCBuaWdodCBtYXJrZXQ&ap=KigKEgnuuQExhks2QBHTotetQopcQBISCfLGBOAEUjZAEdOi11Gdi1xAMABoAQ&ictx=111&ved=2ahUKEwjAy8uvhsWOAxVPTcIFHc5tIjwQrsMEegUIAxCCAg)
+2.8
+(36)
+Amenities for Temple Street Hotel, a 1-star hotel.: Free Wi-Fi, Air conditioning, Restaurant, Airport shuttle, Child-friendly, Smoke-free property,
+1-star hotel
+Free Wi-Fi
+Air conditioning
+Restaurant
+Airport shuttle
+Child-friendly
+Smoke-free property
+This location70 m away
+Photo 1
+Photo 2
+ÚªÖµ©»þÖ¥õ╣ÉÕ«¥Úªå Best Guesthouse
+[HK$494](https://www.google.com/travel/search?q=hong%20kong%20hotels%20near%20temple%20street%20night%20market&g2lb=4899571%2C4899572%2C4965990%2C4969803%2C72302247%2C72317059%2C72414906%2C72471280%2C72472051%2C72485658%2C72560029%2C72573224%2C72616120%2C72647020%2C72648289%2C72686036%2C72760082%2C72803964%2C72832976%2C72882230%2C72958624%2C72959983%2C72990341%2C73021391%2C73027855%2C73034798&hl=en-HK&gl=hk&ssta=1&ts=CAESCgoCCAMKAggDEAAaRwopEicyJTB4MzQwNDAwZWFmMzBiYzBjZDoweGI3ZGQ0MzJmYWY4NDMzYTQSGhIUCgcI6Q8QBxgUEgcI6Q8QBxgVGAEyAhAAKgcKBToDSEtE&qs=CAEyJ0Noa1E1WUdTcnRETjVwSmJHZzB2Wnk4eE1YZzRjWGhqTkhkdUVBSTgGQgkRfB3pl99ZQOVCCRHbnSQPimbxAUIJEYU0LYle3hlnWnQycqoBbxABKhQiEGhvbmcga29uZyBob3RlbHMoADIfEAEiG5Fb82VzKBWUVnFcCng9q6IjWtCv62sldNWJFDI0EAIiMGhvbmcga29uZyBob3RlbHMgbmVhciB0ZW1wbGUgc3RyZWV0IG5pZ2h0IG1hcmtldA&ap=KigKEgnuuQExhks2QBHTotetQopcQBISCfLGBOAEUjZAEdOi11Gdi1xAMABoAQ&ictx=111&ved=2ahUKEwjAy8uvhsWOAxVPTcIFHc5tIjwQrsMEegUIAxCdAg)
+3.8
+(1)
+Amenities for ÚªÖµ©»þÖ¥õ╣ÉÕ«¥Úªå Best Guesthouse: House, Sleeps 7, 4 bedrooms, 4 bathrooms, 6 beds, Air conditioning, Smoke-free, Cable TV, Wheelchair accessible,
+House
+Sleeps 7
+4 bedrooms
+4 bathrooms
+6 beds
+Air conditioning
+Smoke-free
+Cable TV
+Wheelchair accessible
+This location180 m away
+Photo 1
+Photo 2
+HOLIDAY RENTAL
+West Hong Kong
+[HK$656](https://www.google.com/travel/search?q=hong%20kong%20hotels%20near%20temple%20street%20night%20market&g2lb=4899571%2C4899572%2C4965990%2C4969803%2C72302247%2C72317059%2C72414906%2C72471280%2C72472051%2C72485658%2C72560029%2C72573224%2C72616120%2C72647020%2C72648289%2C72686036%2C72760082%2C72803964%2C72832976%2C72882230%2C72958624%2C72959983%2C72990341%2C73021391%2C73027855%2C73034798&hl=en-HK&gl=hk&ssta=1&ts=CAESCgoCCAMKAggDEAAaRwopEicyJTB4MzQwNDAwZWFmMzBiYzBjZDoweGI3ZGQ0MzJmYWY4NDMzYTQSGhIUCgcI6Q8QBxgUEgcI6Q8QBxgVGAEyAhAAKgcKBToDSEtE&qs=CAEyJENoY0lxOHFhOFBHcnlJUnhHZ3N2Wnk4eGRHUnNjbmR4TkJBQjgGQgkRfB3pl99ZQOVCCRHbnSQPimbxAUIJEYU0LYle3hlnWnQycqoBbxABKhQiEGhvbmcga29uZyBob3RlbHMoADIfEAEiG5Fb82VzKBWUVnFcCng9q6IjWtCv62sldNWJFDI0EAIiMGhvbmcga29uZyBob3RlbHMgbmVhciB0ZW1wbGUgc3RyZWV0IG5pZ2h0IG1hcmtldA&ap=KigKEgnuuQExhks2QBHTotetQopcQBISCfLGBOAEUjZAEdOi11Gdi1xAMABoAQ&ictx=111&ved=2ahUKEwjAy8uvhsWOAxVPTcIFHc5tIjwQrsMEegUIAxC3Ag)
+3.6
+(265)
+Amenities for West Hong Kong, a 3-star hotel.: Free Wi-Fi, Air conditioning, Restaurant, Full-service laundry, Accessible, Child-friendly, Smoke-free property,
+3-star hotel
+Free Wi-Fi
+Air conditioning
+Restaurant
+Full-service laundry
+Accessible
+Child-friendly
+Smoke-free property
+This location220 m away
+Photo 1
+Photo 2
+Tempo Inn
+[HK$295](https://www.google.com/travel/search?q=hong%20kong%20hotels%20near%20temple%20street%20night%20market&g2lb=4899571%2C4899572%2C4965990%2C4969803%2C72302247%2C72317059%2C72414906%2C72471280%2C72472051%2C72485658%2C72560029%2C72573224%2C72616120%2C72647020%2C72648289%2C72686036%2C72760082%2C72803964%2C72832976%2C72882230%2C72958624%2C72959983%2C72990341%2C73021391%2C73027855%2C73034798&hl=en-HK&gl=hk&ssta=1&ts=CAESCgoCCAMKAggDEAAaRwopEicyJTB4MzQwNDAwZWFmMzBiYzBjZDoweGI3ZGQ0MzJmYWY4NDMzYTQSGhIUCgcI6Q8QBxgUEgcI6Q8QBxgVGAEyAhAAKgcKBToDSEtE&qs=CAEyKENob0k1XzZIczdUZXNvYkhBUm9OTDJjdk1URmpiV1pqZUd4blh4QUI4BkIJEXwd6ZffWUDlQgkR250kD4pm8QFCCRGFNC2JXt4ZZ1p0MnKqAW8QASoUIhBob25nIGtvbmcgaG90ZWxzKAAyHxABIhuRW_NlcygVlFZxXAp4PauiI1rQr-trJXTViRQyNBACIjBob25nIGtvbmcgaG90ZWxzIG5lYXIgdGVtcGxlIHN0cmVldCBuaWdodCBtYXJrZXQ&ap=KigKEgnuuQExhks2QBHTotetQopcQBISCfLGBOAEUjZAEdOi11Gdi1xAMABoAQ&ictx=111&ved=2ahUKEwjAy8uvhsWOAxVPTcIFHc5tIjwQrsMEegUIAxDSAg)
+3.5
+(62)
+Amenities for Tempo Inn, a 1-star hotel.: Free Wi-Fi, Air conditioning, Child-friendly, Smoke-free property,
+1-star hotel
+Free Wi-Fi
+Air conditioning
+Child-friendly
+Smoke-free property
+This location40 m away
+Photo 1
+Photo 2
+Best Hotel
+[HK$352](https://www.google.com/travel/search?q=hong%20kong%20hotels%20near%20temple%20street%20night%20market&g2lb=4899571%2C4899572%2C4965990%2C4969803%2C72302247%2C72317059%2C72414906%2C72471280%2C72472051%2C72485658%2C72560029%2C72573224%2C72616120%2C72647020%2C72648289%2C72686036%2C72760082%2C72803964%2C72832976%2C72882230%2C72958624%2C72959983%2C72990341%2C73021391%2C73027855%2C73034798&hl=en-HK&gl=hk&ssta=1&ts=CAESCgoCCAMKAggDEAAaRwopEicyJTB4MzQwNDAwZWFmMzBiYzBjZDoweGI3ZGQ0MzJmYWY4NDMzYTQSGhIUCgcI6Q8QBxgUEgcI6Q8QBxgVGAEyAhAAKgcKBToDSEtE&qs=CAEyJkNoZ0k4UFhxcXJfM3AtbXpBUm9MTDJjdk1YUm1ibmMxY1dvUUFROAZCCRF8HemX31lA5UIJEdudJA-KZvEBQgkRhTQtiV7eGWdadDJyqgFvEAEqFCIQaG9uZyBrb25nIGhvdGVscygAMh8QASIbkVvzZXMoFZRWcVwKeD2roiNa0K_rayV01YkUMjQQAiIwaG9uZyBrb25nIGhvdGVscyBuZWFyIHRlbXBsZSBzdHJlZXQgbmlnaHQgbWFya2V0&ap=KigKEgnuuQExhks2QBHTotetQopcQBISCfLGBOAEUjZAEdOi11Gdi1xAMABoAQ&ictx=111&ved=2ahUKEwjAy8uvhsWOAxVPTcIFHc5tIjwQrsMEegUIAxDtAg)
+4.0
+(6)
+Amenities for Best Hotel: Free Wi-Fi, Air conditioning, Child-friendly, Smoke-free property,
+Free Wi-Fi
+Air conditioning
+Child-friendly
+Smoke-free property
+This location180 m away
+Photo 1
+Photo 2
+Royal Hill Hotel
+[HK$418](https://www.google.com/travel/search?q=hong%20kong%20hotels%20near%20temple%20street%20night%20market&g2lb=4899571%2C4899572%2C4965990%2C4969803%2C72302247%2C72317059%2C72414906%2C72471280%2C72472051%2C72485658%2C72560029%2C72573224%2C72616120%2C72647020%2C72648289%2C72686036%2C72760082%2C72803964%2C72832976%2C72882230%2C72958624%2C72959983%2C72990341%2C73021391%2C73027855%2C73034798&hl=en-HK&gl=hk&ssta=1&ts=CAESCgoCCAMKAggDEAAaRwopEicyJTB4MzQwNDAwZWFmMzBiYzBjZDoweGI3ZGQ0MzJmYWY4NDMzYTQSGhIUCgcI6Q8QBxgUEgcI6Q8QBxgVGAEyAhAAKgcKBToDSEtE&qs=CAEyKENob0ltYW5mNy11QjlOaUpBUm9OTDJjdk1URnJlbXA1YTJ4bU1oQUI4BkIJEXwd6ZffWUDlQgkR250kD4pm8QFCCRGFNC2JXt4ZZ1p0MnKqAW8QASoUIhBob25nIGtvbmcgaG90ZWxzKAAyHxABIhuRW_NlcygVlFZxXAp4PauiI1rQr-trJXTViRQyNBACIjBob25nIGtvbmcgaG90ZWxzIG5lYXIgdGVtcGxlIHN0cmVldCBuaWdodCBtYXJrZXQ&ap=KigKEgnuuQExhks2QBHTotetQopcQBISCfLGBOAEUjZAEdOi11Gdi1xAMABoAQ&ictx=111&ved=2ahUKEwjAy8uvhsWOAxVPTcIFHc5tIjwQrsMEegUIAxCIAw)
+3.6
+(11)
+This location200 m away
+Photo 1
+Photo 2
+Travelodge Kowloon
+[HK$662](https://www.google.com/travel/search?q=hong%20kong%20hotels%20near%20temple%20street%20night%20market&g2lb=4899571%2C4899572%2C4965990%2C4969803%2C72302247%2C72317059%2C72414906%2C72471280%2C72472051%2C72485658%2C72560029%2C72573224%2C72616120%2C72647020%2C72648289%2C72686036%2C72760082%2C72803964%2C72832976%2C72882230%2C72958624%2C72959983%2C72990341%2C73021391%2C73027855%2C73034798&hl=en-HK&gl=hk&ssta=1&ts=CAESCgoCCAMKAggDEAAaRwopEicyJTB4MzQwNDAwZWFmMzBiYzBjZDoweGI3ZGQ0MzJmYWY4NDMzYTQSGhIUCgcI6Q8QBxgUEgcI6Q8QBxgVGAEyAhAAKgcKBToDSEtE&qs=CAEyJkNoZ0kxS1haalp6MF9xQTBHZ3d2Wnk4eE1tMDVObmN6TkhvUUFROAZCCRF8HemX31lA5UIJEdudJA-KZvEBQgkRhTQtiV7eGWdadDJyqgFvEAEqFCIQaG9uZyBrb25nIGhvdGVscygAMh8QASIbkVvzZXMoFZRWcVwKeD2roiNa0K_rayV01YkUMjQQAiIwaG9uZyBrb25nIGhvdGVscyBuZWFyIHRlbXBsZSBzdHJlZXQgbmlnaHQgbWFya2V0&ap=KigKEgnuuQExhks2QBHTotetQopcQBISCfLGBOAEUjZAEdOi11Gdi1xAMABoAQ&ictx=111&ved=2ahUKEwjAy8uvhsWOAxVPTcIFHc5tIjwQrsMEegUIAxCiAw)
+3.8
+(709)
+Amenities for Travelodge Kowloon, a 3-star hotel.: Free Wi-Fi, Air conditioning, Parking, Airport shuttle, Accessible, Child-friendly, Smoke-free property,
+3-star hotel
+Free Wi-Fi
+Air conditioning
+Parking
+Airport shuttle
+Accessible
+Child-friendly
+Smoke-free property
+This location250 m away
+Photo 1
+Photo 2
+Photo 3
+Photo 4
+Photo 5
+Photo 6
+Red Hotel
+[HK$465](https://www.google.com/travel/search?q=hong%20kong%20hotels%20near%20temple%20street%20night%20market&g2lb=4899571%2C4899572%2C4965990%2C4969803%2C72302247%2C72317059%2C72414906%2C72471280%2C72472051%2C72485658%2C72560029%2C72573224%2C72616120%2C72647020%2C72648289%2C72686036%2C72760082%2C72803964%2C72832976%2C72882230%2C72958624%2C72959983%2C72990341%2C73021391%2C73027855%2C73034798&hl=en-HK&gl=hk&ssta=1&ts=CAESCgoCCAMKAggDEAAaRwopEicyJTB4MzQwNDAwZWFmMzBiYzBjZDoweGI3ZGQ0MzJmYWY4NDMzYTQSGhIUCgcI6Q8QBxgUEgcI6Q8QBxgVGAEyAhAAKgcKBToDSEtE&qs=CAEyKENob0k2Xy12NmRPMzRNaVhBUm9OTDJjdk1URmlZemgzWkdocWFCQUI4BkIJEXwd6ZffWUDlQgkR250kD4pm8QFCCRGFNC2JXt4ZZ1p0MnKqAW8QASoUIhBob25nIGtvbmcgaG90ZWxzKAAyHxABIhuRW_NlcygVlFZxXAp4PauiI1rQr-trJXTViRQyNBACIjBob25nIGtvbmcgaG90ZWxzIG5lYXIgdGVtcGxlIHN0cmVldCBuaWdodCBtYXJrZXQ&ap=KigKEgnuuQExhks2QBHTotetQopcQBISCfLGBOAEUjZAEdOi11Gdi1xAMABoAQ&ictx=111&ved=2ahUKEwjAy8uvhsWOAxVPTcIFHc5tIjwQrsMEegUIAxC9Aw)
+3.0
+(63)
+Amenities for Red Hotel, a 2-star hotel.: Free Wi-Fi, Air conditioning, Restaurant, Smoke-free property,
+2-star hotel
+Free Wi-Fi
+Air conditioning
+Restaurant
+Smoke-free property
+This location50 m away
+Photo 1
+Photo 2
+Photo 3
+Photo 4
+Photo 5
+Photo 6
+ÞêÆÚü®Úñ¿ Cozy Inn
+GREAT DEAL
+HK$278
+32% less than usual
+3.6
+(96)
+Amenities for ÞêÆÚü®Úñ¿ Cozy Inn, a 2-star hotel.: Free Wi-Fi, Air conditioning, Child-friendly, Smoke-free property,
+2-star hotel
+Free Wi-Fi
+Air conditioning
+Child-friendly
+Smoke-free property
+This location250 m away
+Photo 1
+Photo 2
+Photo 3
+Photo 4
+Photo 5
+Photo 6
+GREAT DEAL
+SUN HUA HOTEL
+[HK$331](https://www.google.com/travel/search?q=hong%20kong%20hotels%20near%20temple%20street%20night%20market&g2lb=4899571%2C4899572%2C4965990%2C4969803%2C72302247%2C72317059%2C72414906%2C72471280%2C72472051%2C72485658%2C72560029%2C72573224%2C72616120%2C72647020%2C72648289%2C72686036%2C72760082%2C72803964%2C72832976%2C72882230%2C72958624%2C72959983%2C72990341%2C73021391%2C73027855%2C73034798&hl=en-HK&gl=hk&ssta=1&ts=CAESCgoCCAMKAggDEAAaRwopEicyJTB4MzQwNDAwZWFmMzBiYzBjZDoweGI3ZGQ0MzJmYWY4NDMzYTQSGhIUCgcI6Q8QBxgUEgcI6Q8QBxgVGAEyAhAAKgcKBToDSEtE&qs=CAEyJ0Noa0lpSnZhdHJHY3hJZzhHZzB2Wnk4eE1Xc3piWG8zZVRJeUVBRTgGQgkRfB3pl99ZQOVCCRHbnSQPimbxAUIJEYU0LYle3hlnWnQycqoBbxABKhQiEGhvbmcga29uZyBob3RlbHMoADIfEAEiG5Fb82VzKBWUVnFcCng9q6IjWtCv62sldNWJFDI0EAIiMGhvbmcga29uZyBob3RlbHMgbmVhciB0ZW1wbGUgc3RyZWV0IG5pZ2h0IG1hcmtldA&ap=KigKEgnuuQExhks2QBHTotetQopcQBISCfLGBOAEUjZAEdOi11Gdi1xAMABoAQ&ictx=111&ved=2ahUKEwjAy8uvhsWOAxVPTcIFHc5tIjwQrsMEegUIAxD3Aw)
+This location190 m away
+Photo 1
+Photo 2
+Photo 3
+Photo 4
+Photo 5
+Photo 6
+
+---
+Repository: raymondlowe/yellowstone-national-park.com
+URL: https://github.com/raymondlowe/yellowstone-national-park.com/issues/9
+Created: 07/28/2025 05:42:34
+Title: Page missing template https://www.yellowstone-national-park.com/visitor-centers
+
+This page is missing the headers and footers from inside dwt template https://www.yellowstone-national-park.com/visitor-centers
+
+fixi it.
+
+
+look for any other pages which may have the same problem.  all pages should be attached to the template.
+
+---
+Repository: raymondlowe/yellowstone-national-park.com
+URL: https://github.com/raymondlowe/yellowstone-national-park.com/issues/7
+Created: 07/28/2025 05:10:16
+Title: Update website
+
+Review, revise, update this website.
+
+Look at the plan.
+
+Look at the google search console data, that's new.
+
+MAKE MORE MONEY - but only thorugh Google AdSense
+
+---
+Repository: raymondlowe/yellowstone-national-park.com
+URL: https://github.com/raymondlowe/yellowstone-national-park.com/issues/5
+Created: 07/18/2025 02:28:51
+Title: Yellowstone National Park Website Enhancement: Comprehensive Action Plan
+
+## Objective
+
+This issue sets out a **detailed, step-by-step improvement plan** for the Yellowstone National Park static website in the private repository `raymondlowe/yellowstone-national-park.com`. The goal is to maximize site usefulness, SEO performance, and commercial value, while ensuring robust content coverage and technical correctness. This plan is designed for the Copilot Agent with access to keywordseverywhere and tavily MCP servers.
+
+## 1. **Initial Content \& Coverage Audit**
+
+- **Review all existing `.html` pages:** Catalogue covered topics, noting page purpose, target audience, and last update.
+- **List sitewide topics/themes currently covered:** E.g., attractions, geysers, hiking, wildlife, lodging, photography, camping, park map, safety, weather, visitor centers, trip planning guides, tours, technology, crowd avoidance, etc.
+- **Identify outdated content and gaps:** Prioritize anything with 2024/older data or poor depth; note missing visitor tips, annual changes, or new features.
+
+
+## 2. **Keyword \& Commercial Opportunity Analysis**
+
+**A. Identify Existing SEO Presence**
+
+- Use the keywordseverywhere server to:
+    - Pull the exact keywords each major site page and the overall domain currently rank for.
+    - Get rank positions, traffic estimates, search volume, and Click-Per-Cost (CPC) values for these keywords.
+
+**B. Analyze Related \& High-Value Keywords**
+
+- Gather lists of:
+    - Related search queries and "People Also Search For" keywords.
+    - High-CPC and high-search-volume keywords, especially for commercial value (e.g., lodging, tour bookings, packages, campground reservations).
+- Pay attention to seasonal trends, destination-specific phrases, and emerging traveler questions.
+- Record CPC and volume for each relevant keyword found.
+
+
+## 3. **Action Plan for Content Enhancement**
+
+### A. Enhance Existing Pages
+
+For each important current page:
+
+- Evaluate and list ways to:
+    - Expand depth and detail (e.g., more current data, rich visitor information).
+    - Add FAQ sections to address "People also ask" queries.
+    - Identify opportunities to embed or link to new, related high-CPC topic pages.
+    - Ensure meta tags (description, keywords) are present and feature target keywords.
+- Where content is stale, update with 2025 or latest available information.
+
+
+### B. Create High-Impact New Pages
+
+For **each** high-value keyword or new user need:
+
+- Map out new page ideas targeting:
+    - Commercial topics (e.g., "Yellowstone family vacation packages 2025", "Yellowstone RV camping tips", "Yellowstone private tours", "Yellowstone weather by month", "Yellowstone road closures/live reports").
+    - Underrepresented visitor interests or trending search questions.
+- **For each new page:**
+    - Copy `inside.dwt` to create the initial HTML file.
+    - Only edit within "\#BeginEditable" / "\#EndEditable" regions (`doctitle`, `meta_description`, and `content`).
+    - Use strong SEO-optimized titles and meta descriptions.
+    - Populate the content block with comprehensive, well-structured information, optimized for the identified keyword and user intent.
+    - Ensure new pages are included in navigation or well-linked from relevant existing pages.
+
+
+### C. Internal Linking Strategy
+
+- Audit for "orphan" pages (no internal links in/out); ensure each page is linked to from at least one prominent spot (nav menu, sidebar, within context in another page).
+- Update nav menus and footer links in `inside.dwt` if required.
+- Add in-text links between related or complementary pages to improve user flow and SEO signal.
+
+
+## 4. **Technical \& Functional Quality Control**
+
+- **Page Rendering:** Check each `.html` page for proper display and correct layout in common browsers.
+- **Navigation Consistency:** Ensure all new and updated pages appear in the siteÔÇÖs main menus and footer as appropriate.
+- **Template Usage:**
+    - Never modify content outside of Dreamweaver "EditableRegion" areas in any file.
+    - Do not alter `inside.dwt` except for: global navigation/footer updates, style tweaks, required structural changes. Document any modifications made.
+    - All new pages must use `inside.dwt` as the template; copy then edit as described.
+- **Meta and SEO Checks:** Confirm all pages have appropriate meta descriptions and keywords, especially newly targeted ones.
+
+
+## 5. **Deployment Self-Check**
+
+- The site deploys to Cloudflare Pages via GitHub Hooks. Before closing this issue:
+    - Confirm that all builds are green and the deployed site is functional.
+    - Spot-check the public site for broken links, 404s, or navigation issues after changes.
+    - Review Google Search Console or any error reporting in Cloudflare (if available) for crawl or indexing issues post-update.
+
+
+## 6. **Reporting and Documentation**
+
+- Track every substantive change in clear commit messages, referencing this issue.
+- Summarize:
+    - All new pages created (listing file names and target keywords).
+    - Major enhancements and updates to existing pages.
+    - Any global template (`inside.dwt`) or navigation changes.
+    - Technical issues fixed (if any).
+- Optionally, update or add a `/docs/WEBSITE-IMPROVEMENT.md` or similar summary as a persistent project log for maintainers[^2].
+
+
+## 7. **Potential Failure Modes \& Cautions**
+
+- **Never** edit content outside Dreamweaver `#BeginEditable`/`#EndEditable` regionsÔÇö**violations will break template rendering**.
+- All new pages must be initialized from `inside.dwt`.
+- DonÔÇÖt create orphaned contentÔÇöall pages must be linked from some user path.
+- When touching global navigation, ensure full coverage across all `.html` files by using the template system.
+- All content updates must cite or reference the current year (2025), especially for guide/seasonal information.
+
+
+### **Tasks Checklist**
+
+- [ ] Audit and document all existing pages/topics.
+- [ ] Catalog current SEO performance and CPC value for main pages and the domain.
+- [ ] Assemble target list of new high-CPC/new intent keywords and page concepts.
+- [ ] Enhance each important existing page as outlined.
+- [ ] Implement new keyword-focused pages; ensure proper template usage.
+- [ ] Check and document all page interlinking.
+- [ ] Validate full site functionality and deployment post-change.
+- [ ] Produce a change summary and (optionally) a persistent improvement log.
+
+**Reference Information**
+
+- The static site is built using old HTML5/Dreamweaver templates (see `inside.dwt`).
+- SEO, keyword, and related data are available via assigned MCP servers.
+- All content and changes must remain within the editable template regions.
+- Site auto-deploys to Cloudflare Pages after change.
+- Use the latest information for all updates or additions.
+
+**If any clarifications are needed on content areas, template rules, or SEO strategies, ask before proceeding.**
+
+<div style="text-align: center">Ôüé</div>
+
+[^1]: https://github.com/raymondlowe/yellowstone-national-park.com
+
+[^2]: https://www.nps.gov/yell/planyourvisit/visitorcenters.htm
+
+[^3]: https://dev.to/mochafreddo/how-to-manage-documentation-in-a-github-repository-a-guide-for-junior-developers-pgo
+
+[^4]: https://www.nps.gov/yell/planyourvisit/west-yellowstone-visitor-information-center.htm
+
+[^5]: https://www.nps.gov/yell/learn/resources-and-issues.htm
+
+[^6]: https://www.tripadvisor.com/Attraction_Review-g60999-d8603584-Reviews-West_Yellowstone_Visitor_Information_Center-Yellowstone_National_Park_Wyoming.html
+
+[^7]: https://www.freecodecamp.org/news/how-to-use-the-dot-github-repository/
+
+[^8]: https://en.tripadvisor.com.hk/Attractions-g60999-Activities-c60-t48-Yellowstone_National_Park_Wyoming.html
+
+[^9]: https://dev.to/olawanle_joel/github-repository-explained-like-i-m-five-52m6
+
+[^10]: https://www.thetravel.com/reality-long-yellowstone-national-park-entrance-lines-amid-record-visitation/
+
+[^11]: https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-an-issues-only-repository
+
+
+
+---
+Repository: raymondlowe/yellowstone-national-park.com
+URL: https://github.com/raymondlowe/yellowstone-national-park.com/issues/3
+Created: 07/17/2025 07:56:37
+Title: Need new page and splash on the front page about the new blue hole
+
+Below is source material, understand and write appropriate new page and splash on the front page pointing to it.
+
+
+Another hole has formed at Yellowstone National Park, geologists say
+Beneath Yellowstone National Park lies a complex and extensive volcanic system.
+
+By[Julia Jacobo](https://abcnews.go.com/author/julia_jacobo)
+July 17, 2025, 3:44 AM
+
+
+
+
+
+1:09
+
+Another hole has formed at Yellowstone National Park, geologists say
+
+Another hole has formed at Yellowstone National Park, geologists sayBeneath Yellowstone National Park lies a complex and extensive volcanic system.
+More geological changes are occurring at Yellowstone National Park, as another hole forms in one of the park's basins.
+
+The hole is a blue water spring, discovered by geologists in April as they conducted routine maintenance of temperature logging stations at Norris Geyser Basin, according to the [U.S. Geological Survey](https://www.usgs.gov/observatories/yvo/news/another-new-hole-ground-norris-geyser-basin).
+
+[MORE: Hidden magma cap discovered at Yellowstone National Park](https://abcnews.go.com/US/hidden-magma-cap-discovered-yellowstone-national-park/story?id=121083908)
+The pool, located in the Porcelain Basin sub-basin west of a patch of vegetation known as "Tree Island," was not there during their last visit to the area in the fall, according to the USGS.
+
+
+View looking northwest at a new thermal pool in the Porcelain Basin area of Norris Geyser Basin, Yellowstone National Park, that probably formed in a series of mildly explosive events between late December 2024 and early February 2025.
+U.S. Geological Survey
+The water is light blue in color and is about 1 foot deep below the rim. It's geological features indicate it formed as a result of a [hydrothermal explosion](https://www.usgs.gov/observatories/yvo/news/hydrothermal-explosions-a-worldwide-phenomena) -- an event caused by pressure changes that result from the transition of liquid water to steam, according to the USGS.
+
+[MORE: Researchers working to save whitebark pine, a declining keystone tree species in the greater Yellowstone area](https://abcnews.go.com/US/researchers-working-save-whitebark-pine-declining-keystone-tree/story?id=109326018)
+The pool measures about 13 feet in diameter and is surrounded by numerous small rocks about 1 foot across. The rocks are covered by light gray, sandy mud.
+
+It is "not surprising" that a hydrothermal explosion occurred at the site, as it has happened several times in recent decades, according to the USGS. The North Geyser Basin is the "most dynamic" area in Yellowstone, the agency said.
+
+
+A satellite image of the Porcelain Basin area of Norris Geyser Basin, Yellowstone National Park, showing the development of a new thermal pool in the circled area, Feb. 13, 2025.
+U.S. Geological Survey
+High-resolution satellite imagery indicates that the hole was not present on Dec. 19, but images taken on Jan. 6 show a depression that had formed in the area. By Feb. 13, the pool had been filled with water, the satellite images show.
+
+More hydrothermal explosions will likely be recorded, as a monitoring station installed in 2023 can detect geophysical data indicating an explosion.
+
+[MORE: Yellowstone visitors are getting so comfortable with approaching wildlife that park officials are asking them to stop](https://abcnews.go.com/US/yellowstone-visitors-comfortable-approaching-wildlife-park-officials-stop/story?id=99847633)
+In April 2024, a "small" explosion at the Porcelain Terrace left a crater measuring several feet across in diameter, according to the [USGS](https://www.usgs.gov/observatories/yvo/news/a-small-hydrothermal-explosion-norris-geyser-basin).
+
+A hole that formed in Yellowstone's Biscuit Basin, near Old Faithful, in July 2024 was also attributed to a hydrothermal explosion, according to the [National Park Service](https://www.nps.gov/yell/learn/news/240723.htm).
+
+
+Porcelain Basin Overlook at Yellowstone National Park.
+National Park Service
+While that hole likely formed in a single major explosive event, the newest thermal feature appears to have formed by multiple small events that initially threw rocks but later threw silica mud a short distance, creating a small pit that became filled with silica-rich water.
+
+[MORE: Yellowstone supervolcano has a lot more magma than previously thought: Scientists](https://abcnews.go.com/US/yellowstone-supervolcano-lot-magma-previously-thought-scientists/story?id=94091938)
+Geologists estimate that the feature probably started to develop on Dec. 25, with further activity occurring through late January and early February, according to the USGS.
+
+Beneath Yellowstone National Park lies a complex and extensive volcanic system. The park is thoroughly monitored by the USGS and the Yellowstone Volcano Observatory.
+
+---
+Repository: raymondlowe/yellowstone-national-park.com
+URL: https://github.com/raymondlowe/yellowstone-national-park.com/issues/1
+Created: 07/17/2025 07:52:09
+Title: missing template https://www.yellowstone-national-park.com/yellowstone-2025-planning-guide
+
+This page is missing the template from inside.dwt
+
+https://www.yellowstone-national-park.com/yellowstone-2025-planning-guide
+
+
+
+---
+Repository: winnietsoi/castel-dell-ovo.com
+URL: https://github.com/winnietsoi/castel-dell-ovo.com/issues/1
+Created: 07/29/2025 02:14:09
+Title: Execute action plan
+
+Execute action plan in .private/detailed-action-plan-castel-dell-ovo.com.md
+
+---
+Repository: winnietsoi/zuma-beach.com
+URL: https://github.com/winnietsoi/zuma-beach.com/issues/1
+Created: 07/29/2025 21:07:51
+Title: XML fact file
+
+**Instruction:**
+
+You are tasked with creating and maintaining a rigorously fact-checked, high-quality informational website. Begin by scanning all existing HTML content to extract **proposed factual claims**ÔÇösuch as locations, activities, services, events, and amenitiesÔÇöwhile filtering out opinions, subjective language, or promotional content.  
+
+In the `.private` directory, create a **fact file** named `facts.xml` using XML format. The first entry must be a well-structured **example** written in **BNF-like syntax** to illustrate acceptable formats and required fields.  
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+BNF Grammar for Fact File Structure:
+
+<fact-file> ::= "<facts>" <fact>* "</facts>"
+<fact> ::= "<fact id=\"" <id> "\">" 
+           <fact-statement> 
+           <source> 
+           <category> 
+           <fact-check-status> 
+           <verification-details>? 
+           <metadata> 
+           "</fact>"
+
+<id> ::= <string>                    <!-- Unique identifier -->
+<fact-statement> ::= "<statement>" <text> "</statement>"
+<source> ::= "<source>" <url-or-file> "</source>"
+<category> ::= "<category>" ( "geography" | "food" | "culture" | "transportation" | "events" | "accommodation" | "recreation" | "history" | "economy" ) "</category>"
+<fact-check-status> ::= "<status>" ( "unverified" | "verified" | "false" | "partially-true" | "disputed" ) "</status>"
+<verification-details> ::= "<verification>" 
+                          <verification-url>? 
+                          <date-checked> 
+                          <checked-by> 
+                          <confidence-level> 
+                          <notes>? 
+                          "</verification>"
+<metadata> ::= "<metadata>" 
+               <created-date> 
+               <last-updated> 
+               <importance-level> 
+               <tourist-relevance> 
+               "</metadata>"
+
+```
+
+Adjust the XML structure as necessary, adding new fields and tags that are relevant to this case is fine. The XML structure is a framework, not a iron clad rule.
+
+ Use **Tavily Search and Extract** to independently verify every proposed fact. Update the XML file with:  
+ - Verified `citation_url` from authoritative sources  
+ - Accurate `date_checked` (use current system date; correct any outdated entries)  
+ - Appropriate `status` based on verification outcome  
+
+ Expand your research to ensure comprehensive coverage:  
+ - Include **all named restaurants** or similar things such as **shops**, **museums**, **businesses**, verifying existence, cuisine, availability (especially during events like the Bun Festival)  
+ - Cover **beaches** or similar such as **parks**, **promenades**, **photo locations**, including names, accessibility, facilities, safety  
+ - Include **recreational activities** (e.g., windsurfing, kayaking, bike rentals, wine tasting, people watching)  
+ - Verify **event dates, durations, and cultural significance**  
+ - Add any other tourist-relevant categories missing from initial scans  
+
+ After completing the fact-checking phase, use the verified `facts.xml` and supporting research files in `.private` to **enhance the website**:  
+ - Edit, rewrite, and expand pages for accuracy, depth, and usefulness  
+ - Add new sections or pages where gaps exist  
+ - Ensure content is detailed, engaging, and helpfulÔÇötransforming raw facts into compelling, trustworthy visitor guidance  
+ - It is good to express opinion, but combine them or use them as an adjunct to facts  
+ - Prioritize high CPC terms, topics with a good combination of high volume and moderate competition.
+ - In your writing focus on readability, clarity, structure, and user experience. Use full evocative sensorial language, write full expressive paragraphs but keep vocabulary to middle school level. Break up walls of text with call out boxes, "tips", "recommendations" etc as well as lists, emojis and links to other resources both internal and external.
+
+ The final website edots should make the site even more be impressively informative, meticulously accurate, and clearly superior to its previous versionÔÇöserving as a reliable resource for travelers.
+

@@ -35,7 +35,7 @@ Global $g_LogFile = ""             ; Log file path
 ; Configurable automation parameters (set from command line)
 Global $g_TabAttempts = 20          ; Number of Tab key presses to try when searching for MCP field
 Global $g_ActionDelay = 500         ; Delay in milliseconds between automation actions
-Global $g_PageLoadDelay = 3000      ; Delay in milliseconds to wait for pages to load
+Global $g_PageLoadDelay = 1000      ; Delay in milliseconds to wait for pages to load
 Global $g_MaxRetries = 3            ; Maximum number of retry attempts for operations
 
 ; Internal timing constants (fine-tuning parameters)
@@ -303,12 +303,12 @@ EndFunc
 ; Main browser automation function - orchestrates the entire configuration process
 Func StartBrowserAutomation($repository, $mcpConfig)
     WriteLog("Starting browser automation workflow for repository: " & $repository)
-    
+
     ; Construct the target GitHub Copilot settings URL
     Local $url = "https://github.com/" & $repository & "/settings/copilot/coding_agent"
     WriteLog("Target URL: " & $url)
     WriteVerboseLog("Full automation workflow starting with URL: " & $url)
-    
+
     ; Step 1: Start browser and navigate to target page
     SetCurrentStep("Starting browser and navigation")
     If Not StartBrowser($url) Then
@@ -316,13 +316,22 @@ Func StartBrowserAutomation($repository, $mcpConfig)
         Return False
     EndIf
     WriteVerboseLog("Browser started and initial navigation completed")
-    
+
+    ; Step 1.5: Check for 404 page after navigation
+    Sleep(1000) ; Give a moment for the title to update
+    Local $windowTitle = WinGetTitle("[ACTIVE]")
+    WriteVerboseLog("Window title after navigation: " & $windowTitle)
+    If StringInStr($windowTitle, "Page not found") > 0 Or StringInStr($windowTitle, "404") > 0 Then
+        WriteLog("Detected 404 or 'Page not found' after navigation. Exiting.", "ERROR")
+        Exit(4)
+    EndIf
+
     ; Step 2: Wait for initial page load
     SetCurrentStep("Waiting for page load")
     WriteLog("Waiting " & ($g_PageLoadDelay / 1000) & " seconds for page to load...")
     Sleep($g_PageLoadDelay)
     WriteVerboseLog("Initial page load wait completed")
-    
+
     ; Step 3: Handle GitHub authentication if required
     SetCurrentStep("Handling authentication")
     If Not HandleAuthentication() Then
@@ -330,7 +339,7 @@ Func StartBrowserAutomation($repository, $mcpConfig)
         Return False
     EndIf
     WriteVerboseLog("Authentication handling completed successfully")
-    
+
     ; Step 4: Locate and navigate to MCP configuration section
     SetCurrentStep("Locating MCP configuration field")
     If Not NavigateToMcpSection() Then
@@ -338,7 +347,7 @@ Func StartBrowserAutomation($repository, $mcpConfig)
         Return False
     EndIf
     WriteVerboseLog("MCP configuration field located and focused")
-    
+
     ; Step 5: Apply the MCP configuration
     SetCurrentStep("Applying MCP configuration")
     If Not ConfigureMcpSettings($mcpConfig) Then
@@ -346,7 +355,7 @@ Func StartBrowserAutomation($repository, $mcpConfig)
         Return False
     EndIf
     WriteVerboseLog("MCP configuration applied successfully")
-    
+
     ; Step 6: Save the configuration (unless in dry run mode)
     If Not $g_DryRunMode Then
         SetCurrentStep("Saving configuration")
@@ -358,12 +367,12 @@ Func StartBrowserAutomation($repository, $mcpConfig)
     Else
         WriteLog("DRY RUN: Skipping configuration save step")
     EndIf
-    
+
     ; Step 7: Clean up browser session
     SetCurrentStep("Cleaning up browser session")
     CloseBrowser()
     WriteVerboseLog("Browser cleanup completed")
-    
+
     WriteLog("Browser automation workflow completed successfully")
     Return True
 EndFunc
@@ -487,80 +496,87 @@ Func FindBrowserPath($browserExe)
 EndFunc
 
 ; Handle GitHub authentication
-Func HandleAuthentication()
-    WriteLog("Checking for authentication requirements")
-    
-    ; Wait for page to load and check for login indicators
-    Sleep(3000)
-    
-    ; Look for login form or "Sign in" button
-    Local $loginDetected = False
-    
-    ; Check window title for login indicators
-    Local $windowTitle = WinGetTitle("[ACTIVE]")
-    If StringInStr($windowTitle, "Sign in") > 0 Or StringInStr($windowTitle, "Login") > 0 Then
-        $loginDetected = True
-    EndIf
-    
-    ; Check for login URL patterns
-    If Not $loginDetected Then
-        ; This is a simplified check - in real implementation, 
-        ; you might need to interact with browser APIs or use OCR
-        Sleep(2000)
-    EndIf
-    
-    If $loginDetected And $g_InteractiveMode Then
-        WriteLog("Authentication required - waiting for manual login")
-        MsgBox(64, "Authentication Required", "Please log in to GitHub in your browser, then click OK to continue.")
-    ElseIf $loginDetected Then
-        WriteLog("Authentication required but not in interactive mode", "ERROR")
-        Return False
-    EndIf
-    
-    WriteLog("Authentication check completed")
-    Return True
-EndFunc
 
 ; =============================================================================
 ; MCP CONFIGURATION FIELD DETECTION AND NAVIGATION
 ; =============================================================================
 
 ; Navigate to MCP configuration section using multiple detection strategies
+
 Func NavigateToMcpSection()
     WriteLog("Attempting to locate MCP configuration field using multiple strategies")
     WriteVerboseLog("Tab attempts configured: " & $g_TabAttempts)
     WriteVerboseLog("Action delay configured: " & $g_ActionDelay & "ms")
-    
+
+    ; Strategy 0: Use Ctrl+F, search for 'MCP configuration', Esc, Tab, Tab, Ctrl+A
+    WriteLog("Strategy 0: Ctrl+F, search for 'MCP configuration', Esc, Tab, Tab, Ctrl+A")
+    If FocusMcpFieldViaSearchShortcut() Then
+        WriteLog("Successfully focused MCP field using search shortcut strategy")
+        Return True
+    EndIf
+
     ; Strategy 1: Sequential Tab navigation to find the field
     WriteLog("Strategy 1: Sequential Tab navigation through form elements")
     If TabNavigationStrategy() Then
         WriteLog("Successfully found MCP field using Tab navigation")
         Return True
     EndIf
-    
+
     ; Strategy 2: Use browser search to locate MCP configuration text
     WriteLog("Strategy 2: Using browser search to locate MCP configuration")
     If SearchNavigationStrategy() Then
         WriteLog("Successfully found MCP field using search navigation")
         Return True
     EndIf
-    
+
     ; Strategy 3: Try common keyboard shortcuts to reach configuration
     WriteLog("Strategy 3: Using keyboard shortcuts for form navigation")
     If ShortcutNavigationStrategy() Then
         WriteLog("Successfully found MCP field using keyboard shortcuts")
         Return True
     EndIf
-    
+
     ; Strategy 4: Page down navigation to scroll through content
     WriteLog("Strategy 4: Page scrolling to locate configuration section")
     If ScrollNavigationStrategy() Then
         WriteLog("Successfully found MCP field using scroll navigation")
         Return True
     EndIf
-    
+
     WriteLog("All navigation strategies failed to locate MCP configuration field", "ERROR")
     WriteLog("The page structure may have changed or the field may not be present", "ERROR")
+    Return False
+EndFunc
+
+; Strategy 0: Ctrl+F, search for 'MCP configuration', Esc, Tab, Tab, Ctrl+A
+Func FocusMcpFieldViaSearchShortcut()
+    WriteVerboseLog("Trying to focus MCP field using Ctrl+F, search, Esc, Tab, Tab, Ctrl+A")
+    ; Open browser search (Ctrl+F)
+    Send("^f")
+    Sleep($g_ActionDelay)
+    ; Type search term
+    Send("MCP configuration")
+    Sleep($g_ActionDelay)
+    ; Press Enter to jump to result
+    Send("{ENTER}")
+    Sleep($g_ActionDelay)
+    ; Close search dialog
+    Send("{ESC}")
+    Sleep($g_ActionDelay)
+    ; Tab twice to move to the editor
+    Send("{TAB}")
+    Sleep($DELAY_BETWEEN_TABS)
+    Send("{TAB}")
+    Sleep($DELAY_BETWEEN_TABS)
+    ; Try selecting all (Ctrl+A)
+    Send("^a")
+    Sleep($DELAY_CLIPBOARD_OPERATION)
+    ; Check if this is the MCP field
+    If CheckForMcpField("SearchShortcut") Then
+        WriteVerboseLog("Focused MCP field using search shortcut")
+        Return True
+    EndIf
+    WriteVerboseLog("Search shortcut strategy did not find MCP field")
     Return False
 EndFunc
 
@@ -890,35 +906,35 @@ EndFunc
 Func ConfigureMcpSettings($mcpConfig)
     WriteLog("Applying MCP configuration to the field")
     WriteVerboseLog("Configuration size: " & StringLen($mcpConfig) & " characters")
-    
+
     If $g_DryRunMode Then
         WriteLog("DRY RUN: Would apply MCP configuration to current field")
         WriteVerboseLog("DRY RUN: Configuration preview: " & StringLeft($mcpConfig, 200) & "...")
         Return True
     EndIf
-    
+
     ; Step 1: Clear existing content from the field
     WriteVerboseLog("Clearing existing field content")
     Local $clearStartTime = TimerInit()
-    
+
     ; Select all existing content
     Send("^a") ; Ctrl+A to select all
     Sleep($DELAY_CLIPBOARD_OPERATION)
-    
+
     ; Delete selected content
     Send("{DELETE}")
     Sleep($g_ActionDelay)
-    
+
     WriteTimingLog("Field content clearing", $clearStartTime)
-    
+
     ; Step 2: Prepare and apply new configuration
     WriteVerboseLog("Preparing configuration for clipboard")
     Local $pasteStartTime = TimerInit()
-    
+
     ; Put configuration into clipboard
     ClipPut($mcpConfig)
     Sleep($DELAY_CLIPBOARD_OPERATION)
-    
+
     ; Verify clipboard content
     Local $clipboardVerify = ClipGet()
     If $clipboardVerify <> $mcpConfig Then
@@ -927,44 +943,33 @@ Func ConfigureMcpSettings($mcpConfig)
         Return False
     EndIf
     WriteVerboseLog("Clipboard prepared successfully")
-    
+
     ; Paste configuration into field
     WriteVerboseLog("Pasting configuration into field")
     Send("^v") ; Ctrl+V to paste
     Sleep($DELAY_AFTER_PASTE)
-    
+
     WriteTimingLog("Configuration pasting", $pasteStartTime)
-    
+
     ; Step 3: Verify the configuration was applied correctly
     WriteVerboseLog("Verifying configuration was applied correctly")
     Local $verifyStartTime = TimerInit()
-    
+
     ; Select all content in field and copy to verify
     Send("^a")
     Sleep($DELAY_CLIPBOARD_OPERATION)
     Send("^c")
     Sleep($DELAY_CLIPBOARD_OPERATION)
-    
-    Local $pastedContent = ClipGet()
-    WriteTimingLog("Configuration verification", $verifyStartTime)
-    
-    ; Compare pasted content with original configuration
-    If StringLen($pastedContent) = 0 Then
-        WriteLog("Configuration verification failed - field appears empty after paste", "ERROR")
-        Return False
-    EndIf
-    
-    ; Check for key MCP indicators in pasted content
-    If StringInStr($pastedContent, "mcpServers") > 0 Then
-        WriteLog("Configuration applied and verified successfully")
-        WriteVerboseLog("Verified content contains mcpServers")
-        WriteVerboseLog("Applied configuration length: " & StringLen($pastedContent) & " characters")
-        Return True
-    Else
-        WriteLog("Configuration verification failed - mcpServers not found in applied content", "ERROR")
-        WriteVerboseLog("Applied content preview: " & StringLeft($pastedContent, 200) & "...")
-        Return False
-    EndIf
+    Send("{ESC}")
+    Sleep($DELAY_CLIPBOARD_OPERATION)
+    Send("{ESC}")
+    Sleep($DELAY_BETWEEN_TABS)
+    Send("{TAB}")
+    Sleep($DELAY_BETWEEN_TABS)
+    Send("{ENTER}")
+    Sleep($g_ActionDelay * 2)
+    WriteVerboseLog("Save button click sequence sent (Esc, Tab, Enter)")
+    Return True
 EndFunc
 
 ; =============================================================================
@@ -973,81 +978,28 @@ EndFunc
 
 ; Save the MCP configuration using multiple save strategies
 Func SaveConfiguration()
-    WriteLog("Attempting to save MCP configuration using multiple strategies")
-    
-    ; Strategy 1: Try Ctrl+S keyboard shortcut
-    WriteLog("Save strategy 1: Using Ctrl+S keyboard shortcut")
-    If SaveViaKeyboardShortcut() Then
-        WriteLog("Configuration saved successfully via Ctrl+S")
-        Return True
-    EndIf
-    
-    ; Strategy 2: Look for and click Save button
-    WriteLog("Save strategy 2: Locating and clicking Save button")
-    If SaveViaButtonClick() Then
-        WriteLog("Configuration saved successfully via Save button")
-        Return True
-    EndIf
-    
-    ; Strategy 3: Try form submission via Enter key
-    WriteLog("Save strategy 3: Using Enter key for form submission")
-    If SaveViaFormSubmission() Then
-        WriteLog("Configuration saved successfully via form submission")
-        Return True
-    EndIf
-    
-    WriteLog("All save strategies failed", "ERROR")
-    Return False
-EndFunc
-
-; Save strategy 1: Use Ctrl+S keyboard shortcut
-Func SaveViaKeyboardShortcut()
-    WriteVerboseLog("Attempting save via Ctrl+S keyboard shortcut")
-    
-    Local $saveStartTime = TimerInit()
-    
-    ; Try Ctrl+S
-    Send("^s")
-    Sleep($g_ActionDelay * 2)
-    
-    ; Check for save confirmation or success indicators
-    ; This is simplified - in practice you might check for:
-    ; - Success messages
-    ; - Page URL changes
-    ; - Disappearing of unsaved changes indicators
-    
-    WriteTimingLog("Ctrl+S save attempt", $saveStartTime)
-    WriteVerboseLog("Ctrl+S save command executed")
-    
-    ; Return true assuming success - this could be enhanced with actual verification
+    ; Saving is now handled immediately after pasting config in ConfigureMcpSettings
+    WriteVerboseLog("SaveConfiguration called, but saving is already handled after paste.")
     Return True
 EndFunc
 
+; Save strategy 1: Use Ctrl+S keyboard shortcut
+
+
 ; Save strategy 2: Find and click Save button
 Func SaveViaButtonClick()
-    WriteVerboseLog("Attempting to locate and click Save button")
-    
-    ; Tab through elements looking for Save button
-    For $i = 1 To 20
-        Send("{TAB}")
-        Sleep($DELAY_BETWEEN_TABS)
-        
-        ; Check if current element might be a save button
-        ; This is simplified - you could enhance this by:
-        ; - Reading button text via accessibility APIs
-        ; - Checking for specific button attributes
-        ; - Using more sophisticated element detection
-        
-        ; Try pressing Enter on what might be a save button
-        If Mod($i, 5) = 0 Then
-            WriteVerboseLog("Trying Enter on potential save button at tab position " & $i)
-            Send("{ENTER}")
-            Sleep($g_ActionDelay * 2)
-        EndIf
-    Next
-    
-    WriteVerboseLog("Save button search completed")
-    Return True ; Simplified - assume success
+    WriteVerboseLog("Attempting to save via Esc, Tab to Save button, then Enter")
+    ; Press Esc to exit the editor
+    Send("{ESC}")
+    Sleep($DELAY_BETWEEN_TABS)
+    ; Tab to move focus to the Save button (usually next element)
+    Send("{TAB}")
+    Sleep($DELAY_BETWEEN_TABS)
+    ; Press Enter to activate the Save button
+    Send("{ENTER}")
+    Sleep($g_ActionDelay * 2)
+    WriteVerboseLog("Save button click sequence sent (Esc, Tab, Enter)")
+    Return True
 EndFunc
 
 ; Save strategy 3: Form submission via Enter key

@@ -1,33 +1,81 @@
 {
   "mcpServers": {
-    "github-mcp": {
+ "ga4-gsc-mcp": {
       "type": "http",
-      "url": "https://api.github.com/mcp",
+      "url": "https://mcp2.wlmedia.com/mcp?key=energyrating",
       "headers": {
-        "Authorization": "Bearer {{ env.GITHUB_TOKEN }}"
+        "Authorization": "Bearer energyrating"
       },
       "tools": [
-        "create_repository",
-        "list_repositories",
-        "get_repository",
-        "create_issue",
-        "list_issues"
+        "query_ga4_data",
+        "query_gsc_data",
+        "query_unified_data",
+        "list_ga4_properties",
+        "list_gsc_domains",
+        "page_performance_ga4",
+        "traffic_sources_ga4",
+        "audience_analysis_ga4",
+        "revenue_analysis_ga4",
+        "page_performance_gsc",
+        "query_analysis_gsc",
+        "page_query_opportunities_gsc"
       ]
+   }
+,
+    "github": {
+      "type": "local",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server"],
+      "tools": ["*"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "COPILOT_MCP_GITHUB_PERSONAL_ACCESS_TOKEN"
+      }
     },
-    "filesystem-mcp": {
+    "perplexity-ask": {
+      "type": "local",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "PERPLEXITY_API_KEY",
+        "mcp/perplexity-ask"
+      ],
+      "env": {
+        "PERPLEXITY_API_KEY": "COPILOT_MCP_PERPLEXITY_API_KEY"
+      },
+      "tools": ["*"]
+    },
+    "keywords-everywhere-mcp": {
       "type": "local",
       "command": "npx",
       "args": [
-        "filesystem-mcp"
+        "mcp-remote",
+        "https://mcp.keywordseverywhere.com/mcp",
+        "--header",
+        "Authorization:Bearer 273ed00c32de961ab646"
       ],
       "env": {
-        "ROOT_PATH": "/workspace"
+        "KEYWORDS_EVERYWHERE_AUTH_HEADER": "Bearer 273ed00c32de961ab646"
       },
       "tools": [
-        "read_file",
-        "write_file",
-        "list_directory",
-        "create_directory"
+        "*"
+      ]
+    },
+    "tavily-mcp": {
+      "type": "local",
+      "command": "bash",
+"args": [
+  "-c",
+  "export TAVILY_API_KEY=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 && npx -y tavily-mcp@latest"
+],
+      "env": {
+        "TAVILY_API_KEY": "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"
+      },
+      "tools": [
+        "tavily-search",
+        "tavily-extract"
       ]
     }
   }
