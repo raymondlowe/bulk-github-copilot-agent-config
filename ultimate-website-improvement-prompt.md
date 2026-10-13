@@ -54,7 +54,7 @@ You are tasked with improving a website so as to geneate more total revenue from
 
 
 ## 9. Monetization (AdSense Only)
-- Monetize the website exclusively using Google AdSense AutoAds. Do NOT add individual AdSense units or any affiliate links. Ensure the AutoAds script is present in the site header as specified in `.github/copilot-instructions.md`.
+- Monetize with Google AdSense as a DUAL setup: keep every hand-placed in-page ad unit AND ensure the Auto Ads loader is present in the site header as specified in `.github/copilot-instructions.md`. Do not add affiliate links.
 - Prioritize content and page creation that targets high-CPC (cost-per-click) keywords and topics, as identified in `.private/detailed-action-plan-*.md` and through research using KeywordsEverywhere and Tavily.
 - Integrate new high-value pages into the site structure (navigation, footers, internal links) to maximize visibility and revenue potential. Document all monetization-related changes in `.private/CHANGELOG.md`.
 - Regularly review AdSense performance using Google Analytics and Search Console data. Store reports and insights in `.private/google-search-console-reports/` and reference them in `.private/last-job.md` for ongoing optimization.
